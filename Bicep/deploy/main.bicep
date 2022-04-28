@@ -1,6 +1,6 @@
 targetScope = 'subscription'
 
-param deploymentTime string
+param deploymentTime string = utcNow()
 param location string = deployment().location
 @allowed([
   'dev'
