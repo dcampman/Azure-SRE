@@ -141,7 +141,7 @@
           {
             "name": "vnetSelector",
             "type": "Microsoft.Solutions.ResourceSelector",
-            "label": "Select existing virtual network",
+            "label": "Existing virtual network",
             "resourceType": "Microsoft.Network/virtualNetworks",
             "options": {
               "filter": {
