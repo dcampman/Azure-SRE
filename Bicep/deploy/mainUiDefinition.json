@@ -137,23 +137,50 @@
       {
         "name": "workspaceConfig",
         "label": "Workspace Configuration",
-        "elements": []
-      },
-      {
-        "name": "dataAutomationConfig",
-        "label": "Data Automation Configuration",
         "elements": [
           {
-            "name": "approverEmail",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Approver Email",
-            "defaultValue": "",
-            "toolTip": "Email address of the appover responsible for validating the data is ready to be released.",
-            "constraints": {
-              "required": true,
-              "regex": "[a-z0-9!#$%&'*+/=?^_'{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_'{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
-              "validationMessage": ""
-            },
+            "name": "vnetSelector",
+            "type": "Microsoft.Solutions.ResourceSelector",
+            "label": "Select existing virtual network",
+            "resourceType": "Microsoft.Network/virtualNetworks",
+            "options": {
+              "filter": {
+                "subscription": "onBasics",
+                "location": "onBasics"
+              }
+            }
+          },
+          {
+            "name": "dataAutomationConfig",
+            "type": "Microsoft.Common.Section",
+            "label": "Data Automation Configuration",
+            "elements": [
+              {
+                "name": "storageSelector",
+                "type": "Microsoft.Solutions.ResourceSelector",
+                "label": "Select storage accounts",
+                "resourceType": "Microsoft.Storage/storageAccounts",
+                "options": {
+                  "filter": {
+                    "subscription": "onBasics",
+                    "location": "onBasics"
+                  }
+                }
+              },
+              {
+                "name": "approverEmail",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Approver Email",
+                "defaultValue": "",
+                "toolTip": "Email address of the appover responsible for validating the data is ready to be released.",
+                "constraints": {
+                  "required": true,
+                  "regex": "[a-z0-9!#$%&'*+/=?^_'{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_'{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+                  "validationMessage": ""
+                },
+                "visible": true
+              }
+            ],
             "visible": true
           }
         ]
@@ -173,7 +200,7 @@
     "outputs": {
       "environment": "[basics('environment')]",
       "workspaceName": "[basics('workspaceName')]",
-      "approverEmail": "[steps('dataAutomationConfig').approverEmail]",
+      "approverEmail": "[steps('workspaceConfig').dataAutomationConfig.approverEmail]",
       "sequence": "[basics('instance')]",
       "tags": "[steps('tags').tags]"
     }
