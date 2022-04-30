@@ -114,9 +114,9 @@
           {
             "name": "newOrExistingLogAnalytics",
             "type": "Microsoft.Common.OptionsGroup",
-            "label": "Log Analytics",
+            "label": "Research Enclave Log Analytics Workspace",
             "defaultValue": "New",
-            "toolTip": "Choose 'New' to create a new Log Analytics Workspace or 'Existing' to choose an existing Log Analytics Workspace",
+            "toolTip": "Choose 'New' to create a new Log Analytics Workspace or 'Existing' to choose an existing Log Analytics Workspace. All resource diagnostics logs and metrics will be configured to this log analytics workspace.",
             "constraints": {
               "allowedValues": [
                 {
@@ -156,7 +156,7 @@
           {
             "name": "workspaceSection",
             "type": "Microsoft.Common.Section",
-            "label": "Configure Research Workspace",
+            "label": "Configure Research Workspace Properties",
             "elements": [
               {
                 "name": "workspaceName",
@@ -174,7 +174,7 @@
               {
                 "name": "instance",
                 "type": "Microsoft.Common.TextBox",
-                "label": "Instance",
+                "label": "Instance of Workspace",
                 "defaultValue": "1",
                 "toolTip": "Instance suffix for resources. Presented as two digits in the naming convention.",
                 "constraints": {
@@ -189,7 +189,7 @@
           {
             "name": "networkingSection",
             "type": "Microsoft.Common.Section",
-            "label": "Configure Virtual Network",
+            "label": "Virtual Network Configuration",
             "elements": [
               {
                 "name": "newOrExistingVnet",
@@ -215,7 +215,7 @@
               {
                 "name": "vnetSelector",
                 "type": "Microsoft.Solutions.ResourceSelector",
-                "label": "Virtual Network",
+                "label": "Existing Virtual Network",
                 "resourceType": "Microsoft.Network/virtualNetworks",
                 "options": {
                   "filter": {
@@ -224,20 +224,50 @@
                   }
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
+              },
+              {
+                "name": "providersApi",
+                "type": "Microsoft.Solutions.ArmApiControl",
+                "request": {
+                  "method": "GET",
+                  "path": "[concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/?api-version=2021-05-01')]"
+                }
+              },
+              {
+                "name": "privateEndpointSubnetDropDown",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Private Endpoint Subnet",
+                "toolTip": "This subnet will be used for the secured storage account's private endpoints.",
+                "constraints": {
+                  "allowedValues": "[map(steps('workspaceConfig').networkingSection.providersApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
+                  "required": true
+                },
+                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
+              },
+              {
+                "name": "computeSubnetDropDown",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Compute Endpoint Subnet",
+                "toolTip": "This subnet will be used for the remote desktop session hosts for AVD.",
+                "constraints": {
+                  "allowedValues": "[map(steps('workspaceConfig').networkingSection.providersApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
+                  "required": true
+                },
+                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               }
             ]
           },
           {
             "name": "storageSection",
             "type": "Microsoft.Common.Section",
-            "label": "Configure Storage",
+            "label": "Secured Storage Configuration",
             "elements": [
               {
                 "name": "newOrExistingStorage",
                 "type": "Microsoft.Common.OptionsGroup",
-                "label": "New or Existing Private Storage",
+                "label": "New or Existing Secured Storage",
                 "defaultValue": "New",
-                "toolTip": "Choose 'New' to create a new privatatized storage account or 'Existing' to choose an existing private storage account.",
+                "toolTip": "Choose 'New' to create a new privatatized storage account or 'Existing' to choose an existing storage account.",
                 "constraints": {
                   "allowedValues": [
                     {
@@ -256,7 +286,7 @@
               {
                 "name": "storageSelector",
                 "type": "Microsoft.Solutions.ResourceSelector",
-                "label": "Private Storage Accounts",
+                "label": "Existing Storage Account",
                 "resourceType": "Microsoft.Storage/storageAccounts",
                 "options": {
                   "filter": {
