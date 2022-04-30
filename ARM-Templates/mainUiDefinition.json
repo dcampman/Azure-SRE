@@ -152,6 +152,11 @@
       {
         "name": "workspaceConfig",
         "label": "Research Workspace",
+        "bladeTitle": "Application credentials",
+        "subLabel": {
+          "preValidation": "Provide VM credentials",
+          "postValidation": "Great - let's move on!"
+        },
         "elements": [
           {
             "name": "workspaceSection",
