@@ -112,16 +112,38 @@
         "label": "Configure Diagnostics Logging",
         "elements": [
           {
+            "name": "newOrExistingLogAnalytics",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Log Analytics",
+            "defaultValue": "New",
+            "toolTip": "Choose 'New' to create a new Log Analytics Workspace or 'Existing' to choose an existing Log Analytics Workspace",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "New",
+                  "value": false
+                },
+                {
+                  "label": "Existing",
+                  "value": true
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
             "name": "logAnalyticsSelector",
             "type": "Microsoft.Solutions.ResourceSelector",
-            "label": "Select Log Anlytics Workspace",
+            "label": "Existing Log Anlytics Workspace",
             "resourceType": "Microsoft.OperationalInsights/workspaces",
             "options": {
               "filter": {
                 "subscription": "onBasics",
                 "location": "onBasics"
               }
-            }
+            },
+            "visible": "[basics('loggingConfig').newOrExistingLogAnalytics]"
           }
         ]
       }
@@ -129,85 +151,64 @@
     "steps": [
       {
         "name": "workspaceConfig",
-        "label": "Workspace Configuration",
+        "label": "Research Workspace",
         "elements": [
           {
-            "name": "workspaceName",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Workspace Name",
-            "defaultValue": "",
-            "toolTip": "Name of the workspace to include in the naming of resources. This value will be truncated to 6 characters in resource names but the full value will be present in tags on resources.",
-            "constraints": {
-              "required": true,
-              "regex": "",
-              "validationMessage": ""
-            },
-            "visible": true
-          },
-          {
-            "name": "instance",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Instance",
-            "defaultValue": "1",
-            "toolTip": "Instance suffix for resources. Presented as two digits in the naming convention.",
-            "constraints": {
-              "required": false,
-              "regex": "^[0-9|0-9]{1,2}$",
-              "validationMessage": ""
-            },
-            "visible": true
-          },
-          {
-            "name": "networkingConfig",
+            "name": "workspaceSection",
             "type": "Microsoft.Common.Section",
-            "label": "Virtual Network",
+            "label": "Configure Research Workspace",
             "elements": [
               {
-                "name": "virtualNetwork",
-                "type": "Microsoft.Network.VirtualNetworkCombo",
-                "label": {
-                  "virtualNetwork": "Virtual network",
-                  "subnets": "Subnets"
-                },
-                "toolTip": {
-                  "virtualNetwork": "",
-                  "subnets": ""
-                },
-                "defaultValue": {
-                  "name": "core",
-                  "addressPrefixSize": "/24"
-                },
+                "name": "workspaceName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Workspace Name",
+                "defaultValue": "",
+                "toolTip": "Name of the workspace to include in the naming of resources. This value will be truncated to 6 characters in resource names but the full value will be present in tags on resources.",
                 "constraints": {
-                  "minAddressPrefixSize": "/24"
+                  "required": true,
+                  "regex": "",
+                  "validationMessage": ""
                 },
-                "options": {
-                  "hideExisting": false
+                "visible": true
+              },
+              {
+                "name": "instance",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Instance",
+                "defaultValue": "1",
+                "toolTip": "Instance suffix for resources. Presented as two digits in the naming convention.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[0-9|0-9]{1,2}$",
+                  "validationMessage": ""
                 },
-                "subnets": {
-                  "subnet1": {
-                    "label": "Private Endpoints Subnet",
-                    "defaultValue": {
-                      "name": "privateEndpoints",
-                      "addressPrefixSize": "/25"
+                "visible": true
+              }
+            ]
+          },
+          {
+            "name": "networkingSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Configure Virtual Network",
+            "elements": [
+              {
+                "name": "newOrExistingVnet",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "New or Existing Virtual Network",
+                "defaultValue": "New",
+                "toolTip": "Choose 'New' to create a new virtual netowrk or 'Existing' to choose an existing virtual network. If choosing an existing virtual network it must have a 'privateEndpoint' and 'compute' subnet.",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "New",
+                      "value": false
                     },
-                    "constraints": {
-                      "minAddressPrefixSize": "/27",
-                      "minAddressCount": 8,
-                      "requireContiguousAddresses": false
+                    {
+                      "label": "Existing",
+                      "value": true
                     }
-                  },
-                  "subnet2": {
-                    "label": "Workload Compute Subnet",
-                    "defaultValue": {
-                      "name": "compute",
-                      "addressPrefixSize": "/25"
-                    },
-                    "constraints": {
-                      "minAddressPrefixSize": "/27",
-                      "minAddressCount": 8,
-                      "requireContiguousAddresses": false
-                    }
-                  }
+                  ],
+                  "required": true
                 },
                 "visible": true
               },
@@ -221,15 +222,37 @@
                     "subscription": "onBasics",
                     "location": "onBasics"
                   }
-                }
+                },
+                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               }
             ]
           },
           {
-            "name": "storageConfig",
+            "name": "storageSection",
             "type": "Microsoft.Common.Section",
-            "label": "Private Storage",
+            "label": "Configure Storage",
             "elements": [
+              {
+                "name": "newOrExistingStorage",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "New or Existing Private Storage",
+                "defaultValue": "New",
+                "toolTip": "Choose 'New' to create a new privatatized storage account or 'Existing' to choose an existing private storage account.",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "New",
+                      "value": false
+                    },
+                    {
+                      "label": "Existing",
+                      "value": true
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
               {
                 "name": "storageSelector",
                 "type": "Microsoft.Solutions.ResourceSelector",
@@ -240,7 +263,8 @@
                     "subscription": "onBasics",
                     "location": "onBasics"
                   }
-                }
+                },
+                "visible": "[steps('workspaceConfig').storageSection.newOrExistingStorage]"
               }
             ]
           }
@@ -251,40 +275,40 @@
         "label": "Data Automation Configuration",
         "elements": [
           {
-            "name": "approverEmail",
-            "type": "Microsoft.Common.TextBox",
-            "label": "Approver Email",
-            "defaultValue": "",
-            "toolTip": "Email address of the appover responsible for validating the data is ready to be released.",
-            "constraints": {
-              "required": true,
-              "regex": "[a-z0-9!#$%&'*+/=?^_'{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_'{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
-              "validationMessage": ""
-            },
-            "visible": true
-          },
-          {
-            "name": "identityConfig",
+            "name": "dataAutomationSection",
             "type": "Microsoft.Common.Section",
-            "label": "Managed Identity",
+            "label": "Data Export Process Approver",
             "elements": [
               {
-                "name": "identity",
-                "type": "Microsoft.ManagedIdentity.IdentitySelector",
-                "label": "Managed Identity Configuration",
-                "toolTip": {
-                  "userAssignedIdentity": "Add user assigned identities to grant the resource access to other existing resources."
-                },
-                "defaultValue": {
-                  "systemAssignedIdentity": "Off"
-                },
-                "options": {
-                  "hideSystemAssignedIdentity": true,
-                  "hideUserAssignedIdentity": false
+                "name": "approverEmail",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Approver Email",
+                "defaultValue": "",
+                "toolTip": "Email address of the appover responsible for validating exported data is ready to be released.",
+                "constraints": {
+                  "required": true,
+                  "regex": "[a-z0-9!#$%&'*+/=?^_'{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_'{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+                  "validationMessage": ""
                 },
                 "visible": true
               }
             ]
+          },
+          {
+            "name": "identity",
+            "type": "Microsoft.ManagedIdentity.IdentitySelector",
+            "label": "Managed Identity Configuration",
+            "toolTip": {
+              "userAssignedIdentity": "Add the user assigned identity required for data processing automation. This identity will be assigned specific roles scoped at the resource group where the data automation resources are deployed"
+            },
+            "defaultValue": {
+              "systemAssignedIdentity": "Off"
+            },
+            "options": {
+              "hideSystemAssignedIdentity": true,
+              "hideUserAssignedIdentity": false
+            },
+            "visible": true
           }
         ]
       },
@@ -302,9 +326,9 @@
     ],
     "outputs": {
       "environment": "[basics('environment')]",
-      "workspaceName": "[steps('workspaceConfig').workspaceName]",
-      "sequence": "[steps('workspaceConfig').instance]",
-      "approverEmail": "[steps('dataAutomationConfig').approverEmail]",
+      "workspaceName": "[steps('workspaceConfig').workspaceSection.workspaceName]",
+      "sequence": "[steps('workspaceConfig').workspaceSection.instance]",
+      "approverEmail": "[steps('dataAutomationConfig').dataAutomationSection.approverEmail]",
       "tags": "[steps('tags').tags]"
     }
   }
