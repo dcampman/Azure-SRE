@@ -35,29 +35,21 @@ var containerNames = {
 }
 
 var vnetAddressPrefixes = [
-  '172.17.0.0/22'
+  '172.17.0.0/24'
 ]
 
 var dnsServers = []
 
 var subnets = [
   {
-    name: 'storage'
-    addressPrefix: '172.17.1.0/24'
-    privateEndpointNetworkPolicies: 'Disabled'
-    serviceEndpoints: [
-      'Microsoft.Storage'
-    ]
-  }
-  {
     name: 'privateEndpoints' // this is hard coded in a resource lookup
-    addressPrefix: '172.17.2.0/24'
+    addressPrefix: '172.17.1.0/25'
     privateEndpointNetworkPolicies: 'Enabled'
     serviceEndpoints: []
   }
   {
     name: 'compute' // this is hard coded in a resource lookup
-    addressPrefix: '172.17.3.0/24'
+    addressPrefix: '172.17.1.128/25'
     privateEndpointNetworkPolicies: 'Disabled'
     serviceEndpoints: []
   }
