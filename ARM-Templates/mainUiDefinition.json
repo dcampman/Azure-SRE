@@ -5,7 +5,7 @@
     "config": {
       "isWizard": false,
       "basics": {
-        "description": "Customized description with dave **markdown**.",
+        "description": "Deploys a Secured Research Environment with data and approval workflows for public access to the data.",
         "subscription": {
           "constraints": {
             "validations": [
