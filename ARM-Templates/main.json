@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "13999094983854451850"
+      "version": "0.4.1318.3566",
+      "templateHash": "13310827317681848215"
     }
   },
   "parameters": {
@@ -32,16 +32,20 @@
     "workspaceName": {
       "type": "string"
     },
+    "approverEmail": {
+      "type": "string"
+    },
     "sequence": {
       "type": "int",
       "defaultValue": 1
     },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    },
     "avdAccess": {
       "type": "bool",
       "defaultValue": false
-    },
-    "approverEmail": {
-      "type": "string"
     },
     "virtualNetwork": {
       "type": "object",
@@ -55,19 +59,15 @@
       "type": "string",
       "defaultValue": ""
     },
-    "PrivateStorage": {
+    "privateStorage": {
       "type": "object",
       "defaultValue": {}
     },
-    "LogAnalytics": {
+    "logAnalytics": {
       "type": "object",
       "defaultValue": {}
     },
     "userAssignedManagedIdentity": {
-      "type": "object",
-      "defaultValue": {}
-    },
-    "tags": {
       "type": "object",
       "defaultValue": {}
     }
@@ -83,27 +83,18 @@
       "exportPendingContainerName": "export-pending"
     },
     "vnetAddressPrefixes": [
-      "172.17.0.0/22"
+      "172.17.0.0/24"
     ],
-    "dnsServers": [],
     "subnets": [
       {
-        "name": "storage",
-        "addressPrefix": "172.17.1.0/24",
-        "privateEndpointNetworkPolicies": "Disabled",
-        "serviceEndpoints": [
-          "Microsoft.Storage"
-        ]
-      },
-      {
         "name": "privateEndpoints",
-        "addressPrefix": "172.17.2.0/24",
+        "addressPrefix": "172.17.1.0/25",
         "privateEndpointNetworkPolicies": "Enabled",
         "serviceEndpoints": []
       },
       {
         "name": "compute",
-        "addressPrefix": "172.17.3.0/24",
+        "addressPrefix": "172.17.1.128/25",
         "privateEndpointNetworkPolicies": "Disabled",
         "serviceEndpoints": []
       }
@@ -111,10 +102,109 @@
   },
   "resources": [
     {
+      "condition": "[empty(parameters('logAnalytics'))]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "condition": "[empty(parameters('virtualNetwork'))]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[empty(parameters('privateStorage'))]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "condition": "[empty(parameters('logAnalytics'))]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "[format('foundation-{0}', parameters('deploymentTime'))]",
-      "location": "[deployment().location]",
+      "name": "[replace(variables('deploymentNameStructure'), '{rtype}', 'law')]",
+      "resourceGroup": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "namingStructure": {
+            "value": "[variables('namingStructure')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1318.3566",
+              "templateHash": "9465307325437266794"
+            }
+          },
+          "parameters": {
+            "namingStructure": {
+              "type": "string"
+            },
+            "subwloadname": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "location": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {}
+            }
+          },
+          "variables": {
+            "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2020-03-01-preview",
+              "name": "[replace(variables('baseName'), '{rtype}', 'law')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "retentionInDays": 30,
+                "features": {
+                  "searchVersion": 1
+                },
+                "sku": {
+                  "name": "PerGB2018"
+                }
+              },
+              "tags": "[parameters('tags')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(variables('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg'))]"
+      ]
+    },
+    {
+      "condition": "[empty(parameters('virtualNetwork'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[replace(variables('deploymentNameStructure'), '{rtype}', 'net')]",
+      "resourceGroup": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -127,17 +217,8 @@
           "namingStructure": {
             "value": "[variables('namingStructure')]"
           },
-          "deploymentNameStructure": {
-            "value": "[variables('deploymentNameStructure')]"
-          },
-          "containerNames": {
-            "value": "[variables('containerNames')]"
-          },
-          "vnetAddressPrefixes": {
+          "addressPrefixes": {
             "value": "[variables('vnetAddressPrefixes')]"
-          },
-          "dnsServers": {
-            "value": "[variables('dnsServers')]"
           },
           "subnets": {
             "value": "[variables('subnets')]"
@@ -147,13 +228,13 @@
           }
         },
         "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "9713964917886561218"
+              "version": "0.4.1318.3566",
+              "templateHash": "15327804509847328766"
             }
           },
           "parameters": {
@@ -163,10 +244,11 @@
             "namingStructure": {
               "type": "string"
             },
-            "deploymentNameStructure": {
-              "type": "string"
+            "subwloadname": {
+              "type": "string",
+              "defaultValue": ""
             },
-            "vnetAddressPrefixes": {
+            "addressPrefixes": {
               "type": "array"
             },
             "dnsServers": {
@@ -176,550 +258,367 @@
             "subnets": {
               "type": "array"
             },
-            "containerNames": {
-              "type": "object"
+            "nsgSecurityRules": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "defaultRouteNextHop": {
+              "type": "string",
+              "defaultValue": ""
             },
             "tags": {
               "type": "object",
               "defaultValue": {}
             }
           },
+          "variables": {
+            "customDNS": "[not(empty(parameters('dnsServers')))]",
+            "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]"
+          },
           "resources": [
             {
-              "type": "Microsoft.Resources/resourceGroups",
-              "apiVersion": "2021-04-01",
-              "name": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg')]",
-              "location": "[parameters('location')]"
-            },
-            {
-              "type": "Microsoft.Resources/resourceGroups",
-              "apiVersion": "2021-04-01",
-              "name": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')]",
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2021-05-01",
+              "name": "[replace(variables('baseName'), '{rtype}', 'vnet')]",
               "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]"
-            },
-            {
-              "type": "Microsoft.Resources/resourceGroups",
-              "apiVersion": "2021-04-01",
-              "name": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]"
-            },
-            {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "[replace(parameters('deploymentNameStructure'), '{rtype}', 'law')]",
-              "resourceGroup": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg')]",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "namingStructure": {
-                    "value": "[parameters('namingStructure')]"
-                  },
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
-                  "tags": {
-                    "value": "[parameters('tags')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "5457754106800320867"
-                    }
-                  },
-                  "parameters": {
-                    "namingStructure": {
-                      "type": "string"
-                    },
-                    "subwloadname": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "location": {
-                      "type": "string"
-                    },
-                    "tags": {
-                      "type": "object",
-                      "defaultValue": {}
-                    }
-                  },
-                  "variables": {
-                    "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]"
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.OperationalInsights/workspaces",
-                      "apiVersion": "2020-03-01-preview",
-                      "name": "[replace(variables('baseName'), '{rtype}', 'law')]",
-                      "location": "[parameters('location')]",
+                "copy": [
+                  {
+                    "name": "subnets",
+                    "count": "[length(parameters('subnets'))]",
+                    "input": {
+                      "name": "[parameters('subnets')[copyIndex('subnets')].name]",
                       "properties": {
-                        "retentionInDays": 30,
-                        "features": {
-                          "searchVersion": 1
+                        "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
+                        "privateEndpointNetworkPolicies": "[if(not(empty(parameters('subnets')[copyIndex('subnets')].privateEndpointNetworkPolicies)), 'Disabled', parameters('subnets')[copyIndex('subnets')].privateEndpointNetworkPolicies)]",
+                        "networkSecurityGroup": {
+                          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}', parameters('subnets')[copyIndex('subnets')].name))]"
                         },
-                        "sku": {
-                          "name": "PerGB2018"
+                        "routeTable": {
+                          "id": "[resourceId('Microsoft.Network/routeTables', format('rt-{0}', parameters('subnets')[copyIndex('subnets')].name))]"
                         }
-                      },
-                      "tags": "[parameters('tags')]"
+                      }
                     }
-                  ]
-                }
+                  }
+                ],
+                "addressSpace": {
+                  "addressPrefixes": "[parameters('addressPrefixes')]"
+                },
+                "dhcpOptions": "[if(variables('customDNS'), createObject('dnsServers', parameters('dnsServers')), json('null'))]"
               },
+              "tags": "[parameters('tags')]",
               "dependsOn": [
-                "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(parameters('namingStructure'), '{subwloadname}', 'sharedsvc'), '{rtype}', 'rg'))]"
+                "networkSecurityGroups",
+                "routeTables"
               ]
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "[replace(parameters('deploymentNameStructure'), '{rtype}', 'net')]",
-              "resourceGroup": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')]",
+              "copy": {
+                "name": "networkSecurityGroups",
+                "count": "[length(parameters('subnets'))]"
+              },
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2021-05-01",
+              "name": "[format('nsg-{0}', parameters('subnets')[copyIndex()].name)]",
+              "location": "[parameters('location')]",
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
+                "securityRules": "[if(not(empty(parameters('nsgSecurityRules'))), parameters('nsgSecurityRules'), json('null'))]"
+              },
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "copy": {
+                "name": "routeTables",
+                "count": "[length(parameters('subnets'))]"
+              },
+              "type": "Microsoft.Network/routeTables",
+              "apiVersion": "2021-05-01",
+              "name": "[format('rt-{0}', parameters('subnets')[copyIndex()].name)]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "disableBgpRoutePropagation": true,
+                "routes": "[if(not(empty(parameters('defaultRouteNextHop'))), createArray(createObject('name', 'default', 'properties', createObject('addressPrefix', '0.0.0.0/0', 'nextHopIpAddress', parameters('defaultRouteNextHop'), 'nextHopType', 'VirtualAppliance'))), json('null'))]"
+              },
+              "tags": "[parameters('tags')]"
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', replace(variables('baseName'), '{rtype}', 'vnet'))]"
+            },
+            "pepSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/privateEndpoints', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[0], split(format('{0}/privateEndpoints', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[1])]"
+            },
+            "workloadSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/compute', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[0], split(format('{0}/compute', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[1])]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg'))]"
+      ]
+    },
+    {
+      "condition": "[empty(parameters('privateStorage'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "[replace(variables('deploymentNameStructure'), '{rtype}', 'stg-pri')]",
+      "resourceGroup": "[replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namingStructure": {
+            "value": "[variables('namingStructure')]"
+          },
+          "subwloadname": {
+            "value": "pri"
+          },
+          "containerNames": {
+            "value": [
+              "[variables('containerNames').exportApprovedContainerName]",
+              "[variables('containerNames').exportPendingContainerName]"
+            ]
+          },
+          "vnetId": {
+            "value": "[if(empty(parameters('virtualNetwork')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net')), '2020-10-01').outputs.vnetId.value, parameters('virtualNetwork').id)]"
+          },
+          "subnetId": {
+            "value": "[if(empty(parameters('virtualNetwork')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net')), '2020-10-01').outputs.pepSubnetId.value, parameters('privateEndpointSubnetId'))]"
+          },
+          "privatize": {
+            "value": true
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1318.3566",
+              "templateHash": "9692592380728435839"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "namingStructure": {
+              "type": "string"
+            },
+            "subwloadname": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "containerNames": {
+              "type": "array"
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "Standard_LRS"
+            },
+            "privatize": {
+              "type": "bool"
+            },
+            "vnetId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "subnetId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "principalIds": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {}
+            }
+          },
+          "variables": {
+            "assignRole": "[not(empty(parameters('principalIds')))]",
+            "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
+            "baseNameClean": "[replace(variables('baseName'), '-', '')]",
+            "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-06-01",
+              "name": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "[parameters('skuName')]"
+              },
+              "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "isHnsEnabled": true,
+                "supportsHttpsTrafficOnly": true,
+                "accessTier": "Hot",
+                "networkAcls": {
+                  "bypass": "AzureServices",
+                  "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]",
+                  "ipRules": [],
+                  "virtualNetworkRules": []
+                }
+              },
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
+              "properties": {
+                "containerDeleteRetentionPolicy": {
+                  "enabled": true,
+                  "days": 7
                 },
-                "mode": "Incremental",
-                "parameters": {
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
-                  "namingStructure": {
-                    "value": "[parameters('namingStructure')]"
-                  },
-                  "addressPrefixes": {
-                    "value": "[parameters('vnetAddressPrefixes')]"
-                  },
-                  "dnsServers": {
-                    "value": "[parameters('dnsServers')]"
-                  },
-                  "subnets": {
-                    "value": "[parameters('subnets')]"
-                  },
-                  "tags": {
-                    "value": "[parameters('tags')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "18275881968749283530"
-                    }
-                  },
-                  "parameters": {
-                    "location": {
-                      "type": "string"
-                    },
-                    "namingStructure": {
-                      "type": "string"
-                    },
-                    "subwloadname": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "addressPrefixes": {
-                      "type": "array"
-                    },
-                    "dnsServers": {
-                      "type": "array"
-                    },
-                    "subnets": {
-                      "type": "array"
-                    },
-                    "nsgSecurityRules": {
-                      "type": "array",
-                      "defaultValue": []
-                    },
-                    "defaultRouteNextHop": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "tags": {
-                      "type": "object",
-                      "defaultValue": {}
-                    }
-                  },
-                  "variables": {
-                    "customDNS": "[not(empty(parameters('dnsServers')))]",
-                    "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]"
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Network/virtualNetworks",
-                      "apiVersion": "2021-05-01",
-                      "name": "[replace(variables('baseName'), '{rtype}', 'vnet')]",
-                      "location": "[parameters('location')]",
-                      "properties": {
-                        "copy": [
-                          {
-                            "name": "subnets",
-                            "count": "[length(parameters('subnets'))]",
-                            "input": {
-                              "name": "[parameters('subnets')[copyIndex('subnets')].name]",
-                              "properties": {
-                                "addressPrefix": "[parameters('subnets')[copyIndex('subnets')].addressPrefix]",
-                                "privateEndpointNetworkPolicies": "[if(not(empty(parameters('subnets')[copyIndex('subnets')].privateEndpointNetworkPolicies)), 'Disabled', parameters('subnets')[copyIndex('subnets')].privateEndpointNetworkPolicies)]",
-                                "networkSecurityGroup": {
-                                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('nsg-{0}', parameters('subnets')[copyIndex('subnets')].name))]"
-                                },
-                                "routeTable": {
-                                  "id": "[resourceId('Microsoft.Network/routeTables', format('rt-{0}', parameters('subnets')[copyIndex('subnets')].name))]"
-                                }
-                              }
-                            }
-                          }
-                        ],
-                        "addressSpace": {
-                          "addressPrefixes": "[parameters('addressPrefixes')]"
-                        },
-                        "dhcpOptions": "[if(variables('customDNS'), createObject('dnsServers', parameters('dnsServers')), json('null'))]"
-                      },
-                      "tags": "[parameters('tags')]",
-                      "dependsOn": [
-                        "networkSecurityGroups",
-                        "routeTables"
-                      ]
-                    },
-                    {
-                      "copy": {
-                        "name": "networkSecurityGroups",
-                        "count": "[length(parameters('subnets'))]"
-                      },
-                      "type": "Microsoft.Network/networkSecurityGroups",
-                      "apiVersion": "2021-05-01",
-                      "name": "[format('nsg-{0}', parameters('subnets')[copyIndex()].name)]",
-                      "location": "[parameters('location')]",
-                      "properties": {
-                        "securityRules": "[if(not(empty(parameters('nsgSecurityRules'))), parameters('nsgSecurityRules'), json('null'))]"
-                      },
-                      "tags": "[parameters('tags')]"
-                    },
-                    {
-                      "copy": {
-                        "name": "routeTables",
-                        "count": "[length(parameters('subnets'))]"
-                      },
-                      "type": "Microsoft.Network/routeTables",
-                      "apiVersion": "2021-05-01",
-                      "name": "[format('rt-{0}', parameters('subnets')[copyIndex()].name)]",
-                      "location": "[parameters('location')]",
-                      "properties": {
-                        "disableBgpRoutePropagation": true,
-                        "routes": "[if(not(empty(parameters('defaultRouteNextHop'))), createArray(createObject('name', 'default', 'properties', createObject('addressPrefix', '0.0.0.0/0', 'nextHopIpAddress', parameters('defaultRouteNextHop'), 'nextHopType', 'VirtualAppliance'))), json('null'))]"
-                      },
-                      "tags": "[parameters('tags')]"
-                    }
-                  ],
-                  "outputs": {
-                    "vnetId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/virtualNetworks', replace(variables('baseName'), '{rtype}', 'vnet'))]"
-                    },
-                    "pepSubnetId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/privateEndpoints', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[0], split(format('{0}/privateEndpoints', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[1])]"
-                    },
-                    "workloadSubnetId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/compute', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[0], split(format('{0}/compute', replace(variables('baseName'), '{rtype}', 'vnet')), '/')[1])]"
-                    }
-                  }
+                "deleteRetentionPolicy": {
+                  "enabled": false
                 }
               },
               "dependsOn": [
-                "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
               ]
             },
             {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "[replace(parameters('deploymentNameStructure'), '{rtype}', 'stg-pri')]",
-              "resourceGroup": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')]",
+              "copy": {
+                "name": "container",
+                "count": "[length(parameters('containerNames'))]"
+              },
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2021-06-01",
+              "name": "[format('{0}/{1}/{2}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default', parameters('containerNames')[copyIndex()])]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+              ]
+            },
+            {
+              "condition": "[parameters('privatize')]",
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2021-03-01",
+              "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
+              "location": "[parameters('location')]",
+              "tags": {},
               "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
+                "subnet": {
+                  "id": "[parameters('subnetId')]"
                 },
-                "mode": "Incremental",
-                "parameters": {
-                  "location": {
-                    "value": "[parameters('location')]"
-                  },
-                  "namingStructure": {
-                    "value": "[parameters('namingStructure')]"
-                  },
-                  "subwloadname": {
-                    "value": "pri"
-                  },
-                  "containerNames": {
-                    "value": [
-                      "[parameters('containerNames').exportApprovedContainerName]",
-                      "[parameters('containerNames').exportPendingContainerName]"
-                    ]
-                  },
-                  "vnetId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'net'))).outputs.vnetId.value]"
-                  },
-                  "subnetId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'net'))).outputs.pepSubnetId.value]"
-                  },
-                  "privatize": {
-                    "value": true
-                  },
-                  "tags": {
-                    "value": "[parameters('tags')]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "2371949461538386197"
-                    }
-                  },
-                  "parameters": {
-                    "location": {
-                      "type": "string"
-                    },
-                    "namingStructure": {
-                      "type": "string"
-                    },
-                    "subwloadname": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "containerNames": {
-                      "type": "array"
-                    },
-                    "skuName": {
-                      "type": "string",
-                      "defaultValue": "Standard_LRS"
-                    },
-                    "privatize": {
-                      "type": "bool"
-                    },
-                    "vnetId": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "subnetId": {
-                      "type": "string",
-                      "defaultValue": ""
-                    },
-                    "principalIds": {
-                      "type": "array",
-                      "defaultValue": []
-                    },
-                    "tags": {
-                      "type": "object",
-                      "defaultValue": {}
-                    }
-                  },
-                  "variables": {
-                    "assignRole": "[not(empty(parameters('principalIds')))]",
-                    "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
-                    "baseNameClean": "[replace(variables('baseName'), '-', '')]",
-                    "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Storage/storageAccounts",
-                      "apiVersion": "2021-06-01",
-                      "name": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]",
-                      "location": "[parameters('location')]",
-                      "kind": "StorageV2",
-                      "sku": {
-                        "name": "[parameters('skuName')]"
-                      },
-                      "properties": {
-                        "minimumTlsVersion": "TLS1_2",
-                        "allowBlobPublicAccess": false,
-                        "isHnsEnabled": true,
-                        "supportsHttpsTrafficOnly": true,
-                        "accessTier": "Hot",
-                        "networkAcls": {
-                          "bypass": "AzureServices",
-                          "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]",
-                          "ipRules": [],
-                          "virtualNetworkRules": []
-                        }
-                      },
-                      "tags": "[parameters('tags')]"
-                    },
-                    {
-                      "type": "Microsoft.Storage/storageAccounts/blobServices",
-                      "apiVersion": "2021-06-01",
-                      "name": "[format('{0}/{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
-                      "properties": {
-                        "containerDeleteRetentionPolicy": {
-                          "enabled": true,
-                          "days": 7
-                        },
-                        "deleteRetentionPolicy": {
-                          "enabled": false
-                        }
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
+                      "groupIds": [
+                        "blob"
                       ]
-                    },
-                    {
-                      "copy": {
-                        "name": "container",
-                        "count": "[length(parameters('containerNames'))]"
-                      },
-                      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-                      "apiVersion": "2021-06-01",
-                      "name": "[format('{0}/{1}/{2}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default', parameters('containerNames')[copyIndex()])]",
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]"
-                      ]
-                    },
-                    {
-                      "condition": "[parameters('privatize')]",
-                      "type": "Microsoft.Network/privateEndpoints",
-                      "apiVersion": "2021-03-01",
-                      "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
-                      "location": "[parameters('location')]",
-                      "tags": {},
-                      "properties": {
-                        "subnet": {
-                          "id": "[parameters('subnetId')]"
-                        },
-                        "privateLinkServiceConnections": [
-                          {
-                            "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
-                            "properties": {
-                              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
-                              "groupIds": [
-                                "blob"
-                              ]
-                            }
-                          }
-                        ]
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
-                      ]
-                    },
-                    {
-                      "condition": "[parameters('privatize')]",
-                      "type": "Microsoft.Network/privateDnsZones",
-                      "apiVersion": "2018-09-01",
-                      "name": "[variables('endpoint')]",
-                      "location": "global",
-                      "properties": {},
-                      "tags": "[parameters('tags')]"
-                    },
-                    {
-                      "condition": "[parameters('privatize')]",
-                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-                      "apiVersion": "2021-03-01",
-                      "name": "[format('{0}/default', replace(variables('baseName'), '{rtype}', 'pep'))]",
-                      "properties": {
-                        "privateDnsZoneConfigs": [
-                          {
-                            "name": "privatelink-blob-core-windows-net",
-                            "properties": {
-                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
-                            }
-                          }
-                        ]
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Network/privateEndpoints', replace(variables('baseName'), '{rtype}', 'pep'))]",
-                        "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
-                      ]
-                    },
-                    {
-                      "condition": "[parameters('privatize')]",
-                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-                      "apiVersion": "2018-09-01",
-                      "name": "[format('{0}/{1}', variables('endpoint'), uniqueString(parameters('vnetId')))]",
-                      "location": "global",
-                      "properties": {
-                        "virtualNetwork": {
-                          "id": "[parameters('vnetId')]"
-                        },
-                        "registrationEnabled": false
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
-                      ]
-                    },
-                    {
-                      "condition": "[variables('assignRole')]",
-                      "copy": {
-                        "name": "rbacAssignment",
-                        "count": "[length(parameters('principalIds'))]"
-                      },
-                      "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2020-10-01-preview",
-                      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
-                      "name": "[guid(format('rbac-{0}-{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), parameters('principalIds')[copyIndex()]))]",
-                      "properties": {
-                        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-                        "principalId": "[parameters('principalIds')[copyIndex()]]",
-                        "principalType": "ServicePrincipal"
-                      },
-                      "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
-                      ]
-                    }
-                  ],
-                  "outputs": {
-                    "storageAccountId": {
-                      "type": "string",
-                      "value": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
-                    },
-                    "storageAccountName": {
-                      "type": "string",
-                      "value": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]"
                     }
                   }
-                }
+                ]
               },
               "dependsOn": [
-                "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg'))]",
-                "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'net'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+              ]
+            },
+            {
+              "condition": "[parameters('privatize')]",
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2018-09-01",
+              "name": "[variables('endpoint')]",
+              "location": "global",
+              "properties": {},
+              "tags": "[parameters('tags')]"
+            },
+            {
+              "condition": "[parameters('privatize')]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2021-03-01",
+              "name": "[format('{0}/default', replace(variables('baseName'), '{rtype}', 'pep'))]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "privatelink-blob-core-windows-net",
+                    "properties": {
+                      "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', replace(variables('baseName'), '{rtype}', 'pep'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
+              ]
+            },
+            {
+              "condition": "[parameters('privatize')]",
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2018-09-01",
+              "name": "[format('{0}/{1}', variables('endpoint'), uniqueString(parameters('vnetId')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[parameters('vnetId')]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('endpoint'))]"
+              ]
+            },
+            {
+              "condition": "[variables('assignRole')]",
+              "copy": {
+                "name": "rbacAssignment",
+                "count": "[length(parameters('principalIds'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-10-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
+              "name": "[guid(format('rbac-{0}-{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), parameters('principalIds')[copyIndex()]))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                "principalId": "[parameters('principalIds')[copyIndex()]]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
               ]
             }
           ],
           "outputs": {
-            "privateStorageAccountId": {
+            "storageAccountId": {
               "type": "string",
-              "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'stg-pri'))).outputs.storageAccountId.value]"
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
             },
-            "privateStorageAccountName": {
+            "storageAccountName": {
               "type": "string",
-              "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'stg-pri'))).outputs.storageAccountName.value]"
-            },
-            "privateStorageAccountRG": {
-              "type": "string",
-              "value": "[replace(replace(parameters('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')]"
-            },
-            "workloadSubnetId": {
-              "type": "string",
-              "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(parameters('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'net'))).outputs.workloadSubnetId.value]"
+              "value": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]"
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net'))]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -748,13 +647,16 @@
             "value": "[variables('containerNames')]"
           },
           "privateStorageAccountName": {
-            "value": "[reference(subscriptionResourceId('Microsoft.Resources/deployments', format('foundation-{0}', parameters('deploymentTime')))).outputs.privateStorageAccountName.value]"
+            "value": "[if(empty(parameters('privateStorage')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'stg-pri')), '2020-10-01').outputs.storageAccountName.value, parameters('privateStorage').name)]"
           },
           "privateStorageAccountRG": {
-            "value": "[reference(subscriptionResourceId('Microsoft.Resources/deployments', format('foundation-{0}', parameters('deploymentTime')))).outputs.privateStorageAccountRG.value]"
+            "value": "[if(empty(parameters('privateStorage')), replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg'), split(parameters('privateStorage').id, '/')[3])]"
           },
           "approverEmail": {
             "value": "[parameters('approverEmail')]"
+          },
+          "userAssignedManagedIdentity": {
+            "value": "[parameters('userAssignedManagedIdentity')]"
           },
           "tags": {
             "value": "[parameters('tags')]"
@@ -766,8 +668,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "14806635897308875736"
+              "version": "0.4.1318.3566",
+              "templateHash": "5711938612232167104"
             }
           },
           "parameters": {
@@ -798,6 +700,10 @@
             "tags": {
               "type": "object",
               "defaultValue": {}
+            },
+            "userAssignedManagedIdentity": {
+              "type": "object",
+              "defaultValue": {}
             }
           },
           "variables": {
@@ -808,6 +714,7 @@
           },
           "resources": [
             {
+              "condition": "[empty(parameters('userAssignedManagedIdentity'))]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2020-10-01",
               "name": "[replace(parameters('deploymentNameStructure'), '{rtype}', 'uami')]",
@@ -840,8 +747,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "10965180675893532509"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "17902204849065772983"
                     }
                   },
                   "parameters": {
@@ -925,7 +832,7 @@
                     "value": "[parameters('privateStorageAccountName')]"
                   },
                   "userAssignedIdentityId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'uami'))).outputs.managedIdentityId.value]"
+                    "value": "[if(not(empty(parameters('userAssignedManagedIdentity'))), parameters('userAssignedManagedIdentity').id, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'uami')), '2020-10-01').outputs.managedIdentityId.value)]"
                   },
                   "tags": {
                     "value": "[parameters('tags')]"
@@ -937,8 +844,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "7124018112643585462"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "5073816896388352871"
                     }
                   },
                   "parameters": {
@@ -1089,7 +996,7 @@
                       "name": "[format('{0}/pipe-data_move', replace(variables('baseName'), '{rtype}', 'adf'))]",
                       "properties": {
                         "activities": [
-                          "[json('{\n\t\"name\": \"Move Data\",\n\t\"type\": \"Copy\",\n\t\"dependsOn\": [],\n\t\"policy\": {\n\t\t\"timeout\": \"7.00:00:00\",\n\t\t\"retry\": 0,\n\t\t\"retryIntervalInSeconds\": 30,\n\t\t\"secureOutput\": false,\n\t\t\"secureInput\": false\n\t},\n\t\"userProperties\": [],\n\t\"typeProperties\": {\n\t\t\"source\": {\n\t\t\t\"type\": \"BinarySource\",\n\t\t\t\"storeSettings\": {\n\t\t\t\t\"type\": \"AzureBlobFSReadSettings\",\n\t\t\t\t\"recursive\": true,\n\t\t\t\t\"deleteFilesAfterCompletion\": true\n\t\t\t},\n\t\t\t\"formatSettings\": {\n\t\t\t\t\"type\": \"BinaryReadSettings\"\n\t\t\t}\n\t\t},\n\t\t\"sink\": {\n\t\t\t\"type\": \"BinarySink\",\n\t\t\t\"storeSettings\": {\n\t\t\t\t\"type\": \"AzureBlobFSWriteSettings\"\n\t\t\t}\n\t\t},\n\t\t\"enableStaging\": false\n\t},\n\t\"inputs\": [\n\t\t{\n\t\t\t\"referenceName\": \"DfsDataset\",\n\t\t\t\"type\": \"DatasetReference\",\n\t\t\t\"parameters\": {\n\t\t\t\t\"storageAccountName\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceStorageAccountName\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t},\n\t\t\t\t\"folderPath\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceFolderPath\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t},\n\t\t\t\t\"fileName\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t],\n\t\"outputs\": [\n\t\t{\n\t\t\t\"referenceName\": \"DfsDataset\",\n\t\t\t\"type\": \"DatasetReference\",\n\t\t\t\"parameters\": {\n\t\t\t\t\"storageAccountName\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkStorageAccountName\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t},\n\t\t\t\t\"folderPath\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkFolderPath\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t},\n\t\t\t\t\"fileName\": {\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\n\t\t\t\t\t\"type\": \"Expression\"\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t]\n}')]"
+                          "[json('{\r\n\t\"name\": \"Move Data\",\r\n\t\"type\": \"Copy\",\r\n\t\"dependsOn\": [],\r\n\t\"policy\": {\r\n\t\t\"timeout\": \"7.00:00:00\",\r\n\t\t\"retry\": 0,\r\n\t\t\"retryIntervalInSeconds\": 30,\r\n\t\t\"secureOutput\": false,\r\n\t\t\"secureInput\": false\r\n\t},\r\n\t\"userProperties\": [],\r\n\t\"typeProperties\": {\r\n\t\t\"source\": {\r\n\t\t\t\"type\": \"BinarySource\",\r\n\t\t\t\"storeSettings\": {\r\n\t\t\t\t\"type\": \"AzureBlobFSReadSettings\",\r\n\t\t\t\t\"recursive\": true,\r\n\t\t\t\t\"deleteFilesAfterCompletion\": true\r\n\t\t\t},\r\n\t\t\t\"formatSettings\": {\r\n\t\t\t\t\"type\": \"BinaryReadSettings\"\r\n\t\t\t}\r\n\t\t},\r\n\t\t\"sink\": {\r\n\t\t\t\"type\": \"BinarySink\",\r\n\t\t\t\"storeSettings\": {\r\n\t\t\t\t\"type\": \"AzureBlobFSWriteSettings\"\r\n\t\t\t}\r\n\t\t},\r\n\t\t\"enableStaging\": false\r\n\t},\r\n\t\"inputs\": [\r\n\t\t{\r\n\t\t\t\"referenceName\": \"DfsDataset\",\r\n\t\t\t\"type\": \"DatasetReference\",\r\n\t\t\t\"parameters\": {\r\n\t\t\t\t\"storageAccountName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceStorageAccountName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"folderPath\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceFolderPath\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"fileName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t],\r\n\t\"outputs\": [\r\n\t\t{\r\n\t\t\t\"referenceName\": \"DfsDataset\",\r\n\t\t\t\"type\": \"DatasetReference\",\r\n\t\t\t\"parameters\": {\r\n\t\t\t\t\"storageAccountName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkStorageAccountName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"folderPath\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkFolderPath\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"fileName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t]\r\n}')]"
                         ],
                         "parameters": {
                           "sourceStorageAccountName": {
@@ -1163,8 +1070,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.5.6.12127",
-                              "templateHash": "340498850069667887"
+                              "version": "0.4.1318.3566",
+                              "templateHash": "7299696582743820056"
                             }
                           },
                           "parameters": {
@@ -1283,8 +1190,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "5933376550915384919"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "2831339259807719703"
                     }
                   },
                   "parameters": {
@@ -1372,7 +1279,7 @@
                         "type": "SystemAssigned"
                       },
                       "properties": {
-                        "definition": "[json('{\n  \"$schema\": \"https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#\",\n  \"contentVersion\": \"1.0.0.0\",\n  \"parameters\": {\n    \"$connections\": {\n      \"defaultValue\": {},\n      \"type\": \"Object\"\n    },\n    \"subscriptionId\": {\n      \"defaultValue\": \"\",\n      \"type\": \"String\"\n    },\n    \"dataFactoryRG\": {\n      \"defaultValue\": \"\",\n      \"type\": \"String\"\n    },\n    \"dataFactoryName\": {\n      \"defaultValue\": \"\",\n      \"type\": \"String\"\n    },\n    \"storageAccountName\": {\n      \"defaultValue\": \"\",\n      \"type\": \"String\"\n    },\n    \"approverEmail\": {\n      \"defaultValue\": \"\",\n      \"type\": \"String\"\n    }\n  },\n  \"triggers\": {\n    \"When_a_blob_is_added_or_modified_(properties_only)_(V2)\": {\n      \"evaluatedRecurrence\": {\n        \"frequency\": \"Minute\",\n        \"interval\": 1\n      },\n      \"inputs\": {\n        \"host\": {\n          \"connection\": {\n            \"name\": \"@parameters(''$connections'')[''azureblob''][''connectionId'']\"\n          }\n        },\n        \"method\": \"get\",\n        \"path\": \"/v2/datasets/@{parameters(''storageAccountName'')}/triggers/batch/onupdatedfile\",\n        \"queries\": {\n          \"checkBothCreatedAndModifiedDateTime\": false,\n          \"folderId\": \"/export-pending\",\n          \"maxFileCount\": 1\n        }\n      },\n      \"recurrence\": {\n        \"frequency\": \"Minute\",\n        \"interval\": 1\n      },\n      \"splitOn\": \"@triggerBody()\",\n      \"type\": \"ApiConnection\"\n    }\n  },\n  \"actions\": {\n    \"Condition\": {\n      \"actions\": {\n        \"Create_a_pipeline_run\": {\n          \"inputs\": {\n            \"body\": {\n              \"fileName\": \"@triggerBody()?[''Name'']\",\n              \"sinkFolderPath\": \"export-approved\",\n              \"sinkStorageAccountName\": \"@parameters(''storageAccountName'')\",\n              \"sourceFolderPath\": \"export-pending\",\n              \"sourceStorageAccountName\": \"@parameters(''storageAccountName'')\"\n            },\n            \"host\": {\n              \"connection\": {\n                \"name\": \"@parameters(''$connections'')[''azuredatafactory''][''connectionId'']\"\n              }\n            },\n            \"method\": \"post\",\n            \"path\": \"/subscriptions/@{parameters(''subscriptionId'')}/resourcegroups/@{parameters(''dataFactoryRG'')}/providers/Microsoft.DataFactory/factories/@{parameters(''dataFactoryName'')}/pipelines/@{encodeURIComponent(''pipe-data_move'')}/CreateRun\",\n            \"queries\": {\n              \"x-ms-api-version\": \"2017-09-01-preview\"\n            }\n          },\n          \"runAfter\": {},\n          \"type\": \"ApiConnection\"\n        }\n      },\n      \"expression\": {\n        \"and\": [\n          {\n            \"equals\": [\n              \"@body(''Send_approval_email'')?[''SelectedOption'']\",\n              \"Approve\"\n            ]\n          }\n        ]\n      },\n      \"runAfter\": {\n        \"Send_approval_email\": [\"Succeeded\"]\n      },\n      \"type\": \"If\"\n    },\n    \"Send_approval_email\": {\n      \"inputs\": {\n        \"body\": {\n          \"Message\": {\n            \"HideHTMLMessage\": false,\n            \"Importance\": \"Normal\",\n            \"Options\": \"Approve, Reject\",\n            \"ShowHTMLConfirmationDialog\": false,\n            \"Subject\": \"Approval Request\",\n            \"To\": \"@parameters(''approverEmail'')\"\n          },\n          \"NotificationUrl\": \"@{listCallbackUrl()}\"\n        },\n        \"host\": {\n          \"connection\": {\n            \"name\": \"@parameters(''$connections'')[''office365''][''connectionId'']\"\n          }\n        },\n        \"path\": \"/approvalmail/$subscriptions\"\n      },\n      \"runAfter\": {},\n      \"type\": \"ApiConnectionWebhook\"\n    }\n  },\n  \"outputs\": {}\n}\n')]",
+                        "definition": "[json('{\r\n  \"$schema\": \"https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#\",\r\n  \"contentVersion\": \"1.0.0.0\",\r\n  \"parameters\": {\r\n    \"$connections\": {\r\n      \"defaultValue\": {},\r\n      \"type\": \"Object\"\r\n    },\r\n    \"subscriptionId\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryRG\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"storageAccountName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"approverEmail\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    }\r\n  },\r\n  \"triggers\": {\r\n    \"When_a_blob_is_added_or_modified_(properties_only)_(V2)\": {\r\n      \"evaluatedRecurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"inputs\": {\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''azureblob''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"method\": \"get\",\r\n        \"path\": \"/v2/datasets/@{parameters(''storageAccountName'')}/triggers/batch/onupdatedfile\",\r\n        \"queries\": {\r\n          \"checkBothCreatedAndModifiedDateTime\": false,\r\n          \"folderId\": \"/export-pending\",\r\n          \"maxFileCount\": 1\r\n        }\r\n      },\r\n      \"recurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"splitOn\": \"@triggerBody()\",\r\n      \"type\": \"ApiConnection\"\r\n    }\r\n  },\r\n  \"actions\": {\r\n    \"Condition\": {\r\n      \"actions\": {\r\n        \"Create_a_pipeline_run\": {\r\n          \"inputs\": {\r\n            \"body\": {\r\n              \"fileName\": \"@triggerBody()?[''Name'']\",\r\n              \"sinkFolderPath\": \"export-approved\",\r\n              \"sinkStorageAccountName\": \"@parameters(''storageAccountName'')\",\r\n              \"sourceFolderPath\": \"export-pending\",\r\n              \"sourceStorageAccountName\": \"@parameters(''storageAccountName'')\"\r\n            },\r\n            \"host\": {\r\n              \"connection\": {\r\n                \"name\": \"@parameters(''$connections'')[''azuredatafactory''][''connectionId'']\"\r\n              }\r\n            },\r\n            \"method\": \"post\",\r\n            \"path\": \"/subscriptions/@{parameters(''subscriptionId'')}/resourcegroups/@{parameters(''dataFactoryRG'')}/providers/Microsoft.DataFactory/factories/@{parameters(''dataFactoryName'')}/pipelines/@{encodeURIComponent(''pipe-data_move'')}/CreateRun\",\r\n            \"queries\": {\r\n              \"x-ms-api-version\": \"2017-09-01-preview\"\r\n            }\r\n          },\r\n          \"runAfter\": {},\r\n          \"type\": \"ApiConnection\"\r\n        }\r\n      },\r\n      \"expression\": {\r\n        \"and\": [\r\n          {\r\n            \"equals\": [\r\n              \"@body(''Send_approval_email'')?[''SelectedOption'']\",\r\n              \"Approve\"\r\n            ]\r\n          }\r\n        ]\r\n      },\r\n      \"runAfter\": {\r\n        \"Send_approval_email\": [\"Succeeded\"]\r\n      },\r\n      \"type\": \"If\"\r\n    },\r\n    \"Send_approval_email\": {\r\n      \"inputs\": {\r\n        \"body\": {\r\n          \"Message\": {\r\n            \"HideHTMLMessage\": false,\r\n            \"Importance\": \"Normal\",\r\n            \"Options\": \"Approve, Reject\",\r\n            \"ShowHTMLConfirmationDialog\": false,\r\n            \"Subject\": \"Approval Request\",\r\n            \"To\": \"@parameters(''approverEmail'')\"\r\n          },\r\n          \"NotificationUrl\": \"@{listCallbackUrl()}\"\r\n        },\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''office365''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"path\": \"/approvalmail/$subscriptions\"\r\n      },\r\n      \"runAfter\": {},\r\n      \"type\": \"ApiConnectionWebhook\"\r\n    }\r\n  },\r\n  \"outputs\": {}\r\n}\r\n')]",
                         "parameters": {
                           "$connections": {
                             "value": {
@@ -1505,8 +1412,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "2371949461538386197"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "9692592380728435839"
                     }
                   },
                   "parameters": {
@@ -1604,7 +1511,8 @@
                       "apiVersion": "2021-06-01",
                       "name": "[format('{0}/{1}/{2}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default', parameters('containerNames')[copyIndex()])]",
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]"
+                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
                       ]
                     },
                     {
@@ -1751,8 +1659,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "5317620837829197940"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "5872599097049968124"
                     }
                   },
                   "parameters": {
@@ -1841,8 +1749,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "5317620837829197940"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "5872599097049968124"
                     }
                   },
                   "parameters": {
@@ -1934,8 +1842,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "12717959914741133906"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "9806826452630078105"
                     }
                   },
                   "parameters": {
@@ -2051,8 +1959,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "12717959914741133906"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "9806826452630078105"
                     }
                   },
                   "parameters": {
@@ -2153,8 +2061,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "3699645577030057827"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "10083270956540796732"
                     }
                   },
                   "parameters": {
@@ -2218,7 +2126,7 @@
                     "value": "\r\n          param(\r\n            [string] [Parameter(Mandatory=$true)] $ResourceGroupName,\r\n            [string] [Parameter(Mandatory=$true)] $azureDataFactoryName,\r\n            [string] [Parameter(Mandatory=$true)] $privateLinkResourceId\r\n          )\r\n\r\n          Connect-AzAccount -Identity\r\n\r\n          # Start Triggers\r\n          Get-AzDataFactoryV2Trigger -DataFactoryName $azureDataFactoryName -ResourceGroupName $ResourceGroupName | Start-AzDataFactoryV2Trigger -Force | Out-Null\r\n\r\n          # Approve DFS private endpoint\r\n          foreach ($privateLinkConnection in (Get-AzPrivateEndpointConnection -PrivateLinkResourceId $privateLinkResourceId)) { if ($privateLinkConnection.PrivateLinkServiceConnectionState.Status -eq \"Pending\") { Approve-AzPrivateEndpointConnection -ResourceId $privateLinkConnection.id } }\r\n        "
                   },
                   "userAssignedIdentityId": {
-                    "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'uami'))).outputs.managedIdentityId.value]"
+                    "value": "[if(not(empty(parameters('userAssignedManagedIdentity'))), parameters('userAssignedManagedIdentity').id, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'uami')), '2020-10-01').outputs.managedIdentityId.value)]"
                   },
                   "tags": {
                     "value": "[parameters('tags')]"
@@ -2230,8 +2138,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "340498850069667887"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "7299696582743820056"
                     }
                   },
                   "parameters": {
@@ -2303,10 +2211,12 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', format('foundation-{0}', parameters('deploymentTime')))]"
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'stg-pri'))]"
       ]
     },
     {
+      "condition": "[parameters('avdAccess')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
       "name": "[format('access-{0}', parameters('deploymentTime'))]",
@@ -2330,7 +2240,7 @@
             "value": "[variables('deploymentNameStructure')]"
           },
           "avdSubnetId": {
-            "value": "[reference(subscriptionResourceId('Microsoft.Resources/deployments', format('foundation-{0}', parameters('deploymentTime')))).outputs.workloadSubnetId.value]"
+            "value": "[if(empty(parameters('virtualNetwork')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net')), '2020-10-01').outputs.workloadSubnetId.value, parameters('computeSubnetId'))]"
           },
           "rdshPrefix": {
             "value": "rdsh"
@@ -2345,8 +2255,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "16858095543134577656"
+              "version": "0.4.1318.3566",
+              "templateHash": "14413220628982521967"
             }
           },
           "parameters": {
@@ -2416,8 +2326,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "782230105392855155"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "11598349481684982477"
                     }
                   },
                   "parameters": {
@@ -2573,8 +2483,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "12967229178686930666"
+                      "version": "0.4.1318.3566",
+                      "templateHash": "4849021828354901359"
                     }
                   },
                   "parameters": {
@@ -2741,7 +2651,7 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', format('foundation-{0}', parameters('deploymentTime')))]"
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net'))]"
       ]
     }
   ]
