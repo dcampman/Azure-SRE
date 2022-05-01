@@ -245,14 +245,6 @@
                 "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               },
               {
-                "name": "privateEndpointSubnet",
-                "type": "Microsoft.Solutions.ArmApiControl",
-                "request": {
-                  "method": "GET",
-                  "path": "[concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.privateEndpointSubnetDropDown, '?api-version=2021-05-01')]"
-                }
-              },
-              {
                 "name": "computeSubnetDropDown",
                 "type": "Microsoft.Common.DropDown",
                 "label": "Compute Endpoint Subnet",
@@ -262,14 +254,6 @@
                   "required": true
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
-              },
-              {
-                "name": "computeSubnet",
-                "type": "Microsoft.Solutions.ArmApiControl",
-                "request": {
-                  "method": "GET",
-                  "path": "[concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.computeSubnetDropDown, '?api-version=2021-05-01')]"
-                }
               }
             ]
           },
