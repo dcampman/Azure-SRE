@@ -243,17 +243,6 @@
                   "required": true
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
-              },
-              {
-                "name": "computeSubnetDropDown",
-                "type": "Microsoft.Common.DropDown",
-                "label": "Compute Endpoint Subnet",
-                "toolTip": "This subnet will be used for the remote desktop session hosts for AVD.",
-                "constraints": {
-                  "allowedValues": "[map(steps('workspaceConfig').networkingSection.subnetsApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
-                  "required": true
-                },
-                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               }
             ]
           },
@@ -295,6 +284,45 @@
                   }
                 },
                 "visible": "[steps('workspaceConfig').storageSection.newOrExistingStorage]"
+              }
+            ]
+          },
+          {
+            "name": "remoteAccessSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Configure Remote Access",
+            "elements": [
+              {
+                "name": "avdAccess",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Add AVD Access to environment",
+                "defaultValue": "Yes",
+                "toolTip": "",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Yes",
+                      "value": true
+                    },
+                    {
+                      "label": "No",
+                      "value": false
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "computeSubnetDropDown",
+                "type": "Microsoft.Common.DropDown",
+                "label": "Session Host Subnet",
+                "toolTip": "This subnet will be used for the remote desktop session hosts for AVD.",
+                "constraints": {
+                  "allowedValues": "[map(steps('workspaceConfig').networkingSection.subnetsApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
+                  "required": true
+                },
+                "visible": "[and(steps('workspaceConfig').remoteAccessSection.avdAccess, steps('workspaceConfig').networkingSection.newOrExistingVnet)]"
               }
             ]
           }
@@ -358,9 +386,10 @@
       "environment": "[basics('environment')]",
       "workspaceName": "[steps('workspaceConfig').workspaceSection.workspaceName]",
       "sequence": "[steps('workspaceConfig').workspaceSection.instance]",
+      "avdAccess": "[steps('workspaceConfig').remoteAccessSection.avdAccess]",
       "approverEmail": "[steps('dataAutomationConfig').dataAutomationSection.approverEmail]",
       "virtualNetwork": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.vnetSelector, parse('{}'))]",
-      "computeSubnetId": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.computeSubnetDropDown), parse('{}'))]",
+      "computeSubnetId": "[if(and(steps('workspaceConfig').remoteAccessSection.avdAccess, steps('workspaceConfig').networkingSection.newOrExistingVnet), concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').remoteAccessSection.computeSubnetDropDown), parse('{}'))]",
       "privateEndpointSubnetId": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.privateEndpointSubnetDropDown), parse('{}'))]",
       "PrivateStorage": "[if(steps('workspaceConfig').storageSection.newOrExistingStorage, steps('workspaceConfig').storageSection.storageSelector, parse('{}'))]",
       "LogAnalytics": "[if(basics('loggingConfig').newOrExistingLogAnalytics, basics('loggingConfig').logAnalyticsSelector, parse('{}'))]",

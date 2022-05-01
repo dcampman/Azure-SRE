@@ -60,6 +60,7 @@ var subnets = [
 //########################################################################//
 
 // run modules if we need foundational resources
+// move all this stuff out to main.bicep and remove foundation module
 module foundations '../root_modules/foundation.bicep' = {
   name: 'foundation-${deploymentTime}'
   params: {
@@ -90,6 +91,7 @@ module dataAutomation '../root_modules/dataAutomation.bicep' = {
 }
 
 // run modules if we need avd access to TRE
+// take incoming bool to establish this layer
 module access '../root_modules/access.bicep' = {
   name: 'access-${deploymentTime}'
   params: {

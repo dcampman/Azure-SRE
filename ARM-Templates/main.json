@@ -32,12 +32,16 @@
     "workspaceName": {
       "type": "string"
     },
-    "approverEmail": {
-      "type": "string"
-    },
     "sequence": {
       "type": "int",
       "defaultValue": 1
+    },
+    "avdAccess": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "approverEmail": {
+      "type": "string"
     },
     "virtualNetwork": {
       "type": "object",
@@ -56,6 +60,10 @@
       "defaultValue": {}
     },
     "LogAnalytics": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "userAssignedManagedIdentity": {
       "type": "object",
       "defaultValue": {}
     },
