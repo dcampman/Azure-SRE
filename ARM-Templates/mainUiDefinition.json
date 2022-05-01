@@ -359,11 +359,11 @@
       "workspaceName": "[steps('workspaceConfig').workspaceSection.workspaceName]",
       "sequence": "[steps('workspaceConfig').workspaceSection.instance]",
       "approverEmail": "[steps('dataAutomationConfig').dataAutomationSection.approverEmail]",
-      "virtualNetwork": "[if(steps('workspaceConfig').networkSection.newOrExistingVnet, steps('workspaceConfig').networkSection.vnetSelector, {}]",
+      "virtualNetwork": "[if(steps('workspaceConfig').networkSection.newOrExistingVnet, steps('workspaceConfig').networkSection.vnetSelector, \"{}\"]",
       "computeSubnetId": "[concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.computeSubnetDropDown)]",
       "privateEndpointSubnetId": "[concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.privateEndpointSubnetDropDown)]",
-      "PrivateStorage": "[if(steps('workspaceConfig').storageSection.newOrExistingStorage, steps('workspaceConfig').storageSection.storageSelector, {}]",
-      "LogAnalytics": "[if(basics('loggingConfig').newOrExistingLogAnalytics, basics('loggingConfig').logAnalyticsSelector, {}]",
+      "PrivateStorage": "[if(steps('workspaceConfig').storageSection.newOrExistingStorage, steps('workspaceConfig').storageSection.storageSelector, \"{}\"]",
+      "LogAnalytics": "[if(basics('loggingConfig').newOrExistingLogAnalytics, basics('loggingConfig').logAnalyticsSelector, \"{}\"]",
       "tags": "[steps('tags').tags]"
     }
   }
