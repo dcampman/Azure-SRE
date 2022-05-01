@@ -39,6 +39,26 @@
       "type": "int",
       "defaultValue": 1
     },
+    "virtualNetwork": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "computeSubnetId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "privateEndpointSubnetId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "PrivateStorage": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "LogAnalytics": {
+      "type": "object",
+      "defaultValue": {}
+    },
     "tags": {
       "type": "object",
       "defaultValue": {}
