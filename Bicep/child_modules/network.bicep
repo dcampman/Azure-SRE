@@ -2,7 +2,7 @@ param location string
 param namingStructure string
 param subwloadname string = ''
 param addressPrefixes array
-param dnsServers array
+param dnsServers array = []
 param subnets array
 param nsgSecurityRules array = []
 param defaultRouteNextHop string = ''

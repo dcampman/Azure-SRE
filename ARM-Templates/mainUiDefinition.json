@@ -329,7 +329,7 @@
             "type": "Microsoft.ManagedIdentity.IdentitySelector",
             "label": "Managed Identity Configuration",
             "toolTip": {
-              "userAssignedIdentity": "Add the user assigned identity required for data processing automation. This identity will be assigned specific roles scoped at the resource group where the data automation resources are deployed"
+              "userAssignedIdentity": "Select an **existing** user assigned identity required for data processing automation. This identity must be assigned 'Storage Account Contributor' and 'Data Factory Contributor' scoped at the resource group level or higher, where the data automation resources are deployed."
             },
             "defaultValue": {
               "systemAssignedIdentity": "Off"

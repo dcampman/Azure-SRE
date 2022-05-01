@@ -38,8 +38,6 @@ var vnetAddressPrefixes = [
   '172.17.0.0/24'
 ]
 
-var dnsServers = []
-
 var subnets = [
   {
     name: 'privateEndpoints' // this is hard coded in a resource lookup
@@ -70,7 +68,6 @@ module foundations '../root_modules/foundation.bicep' = {
     deploymentNameStructure: deploymentNameStructure
     containerNames: containerNames
     vnetAddressPrefixes: vnetAddressPrefixes
-    dnsServers: dnsServers
     subnets: subnets
     tags: tags
   }
