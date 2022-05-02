@@ -273,7 +273,7 @@
                 "options": {
                   "filter": {}
                 },
-                "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
+                "visible": "[and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub)]"
               },
               {
                 "name": "defaultRouteNextHop",
@@ -286,7 +286,7 @@
                   "regex": "",
                   "validationMessage": ""
                 },
-                "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
+                "visible": "[and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub)]"
               }
             ]
           },
