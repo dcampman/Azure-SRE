@@ -48,13 +48,13 @@ var vnetAddressPrefixes = [
 var subnets = [
   {
     name: 'privateEndpoints' // this is hard coded in a resource lookup
-    addressPrefix: '172.17.1.0/25'
+    addressPrefix: '172.17.0.0/25'
     privateEndpointNetworkPolicies: 'Enabled'
     serviceEndpoints: []
   }
   {
     name: 'compute' // this is hard coded in a resource lookup
-    addressPrefix: '172.17.1.128/25'
+    addressPrefix: '172.17.0.128/25'
     privateEndpointNetworkPolicies: 'Disabled'
     serviceEndpoints: []
   }
