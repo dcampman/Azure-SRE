@@ -1,6 +1,7 @@
 param location string
 param rdshPrefix string
 param avdSubnetId string
+param rdshVmSize string
 param hostPoolRegistrationToken string
 param hostPoolName string
 param vmCount int = 1
@@ -66,7 +67,7 @@ resource vmDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
         value: 'StandardSSD_LRS'
       }
       rdshVmSize: {
-        value: 'Standard_D2s_v3'
+        value: rdshVmSize
       }
       enableAcceleratedNetworking: {
         value: true

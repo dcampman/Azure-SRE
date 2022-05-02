@@ -5,8 +5,9 @@ param namingStructure string
 param subwloadname string = ''
 param deploymentNameStructure string
 param avdSubnetId string
+param rdshVmSize string
 param rdshPrefix string
-param vmCount int = 1
+param vmCount int
 param tags object = {}
 
 var baseName = !empty(subwloadname) ? replace(namingStructure, '{subwloadname}', subwloadname) : replace(namingStructure, '-{subwloadname}', '')
@@ -36,6 +37,7 @@ module avdCompute '../child_modules/avdCompute.bicep' = {
     hostPoolRegistrationToken: avd.outputs.hostpoolRegistrationToken
     deploymentNameStructure: deploymentNameStructure
     vmCount: vmCount
+    rdshVmSize: rdshVmSize
     rdshPrefix: rdshPrefix
     hostPoolName: avd.outputs.hostpoolName
     avdSubnetId: avdSubnetId

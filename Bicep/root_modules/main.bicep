@@ -17,8 +17,10 @@ param approverEmail string
 param sequence int = 1
 param tags object = {}
 
-// existing resource objects
+// optional parameters
 param avdAccess bool = false
+param rdshVmSize string = 'Standard_D2s_v3'
+param vmCount int = 1
 param virtualNetwork object = {}
 param computeSubnetId string = ''
 param privateEndpointSubnetId string = ''
@@ -191,6 +193,8 @@ module access './access.bicep' = if (avdAccess) {
     namingStructure: namingStructure
     subwloadname: 'access'
     deploymentNameStructure: deploymentNameStructure
+    vmCount: vmCount
+    rdshVmSize: rdshVmSize
     avdSubnetId: empty(virtualNetwork) ? workspaceVnet.outputs.workloadSubnetId : computeSubnetId
     rdshPrefix: 'rdsh'
     tags: tags

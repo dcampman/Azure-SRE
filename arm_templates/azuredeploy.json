@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "42478778020097715"
+      "templateHash": "6938698849653810271"
     }
   },
   "parameters": {
@@ -46,6 +46,14 @@
     "avdAccess": {
       "type": "bool",
       "defaultValue": false
+    },
+    "rdshVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3"
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 1
     },
     "virtualNetwork": {
       "type": "object",
@@ -413,7 +421,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "17789712559307078708"
+              "templateHash": "14962272343539166207"
             }
           },
           "parameters": {
@@ -457,7 +465,7 @@
           "variables": {
             "assignRole": "[not(empty(parameters('principalIds')))]",
             "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
-            "stgNameClean": "[replace(take(guid(subscription().id, resourceGroup().id, variables('baseName')), 22), '-', '')]",
+            "stgNameClean": "[take(replace(guid(subscription().id, resourceGroup().id, variables('baseName')), '-', ''), 22)]",
             "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
           },
           "resources": [
@@ -675,7 +683,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "2050086730278823325"
+              "templateHash": "3331627796748104839"
             }
           },
           "parameters": {
@@ -1437,7 +1445,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "17789712559307078708"
+                      "templateHash": "14962272343539166207"
                     }
                   },
                   "parameters": {
@@ -1481,7 +1489,7 @@
                   "variables": {
                     "assignRole": "[not(empty(parameters('principalIds')))]",
                     "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
-                    "stgNameClean": "[replace(take(guid(subscription().id, resourceGroup().id, variables('baseName')), 22), '-', '')]",
+                    "stgNameClean": "[take(replace(guid(subscription().id, resourceGroup().id, variables('baseName')), '-', ''), 22)]",
                     "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
                   },
                   "resources": [
@@ -2262,6 +2270,12 @@
           "deploymentNameStructure": {
             "value": "[variables('deploymentNameStructure')]"
           },
+          "vmCount": {
+            "value": "[parameters('vmCount')]"
+          },
+          "rdshVmSize": {
+            "value": "[parameters('rdshVmSize')]"
+          },
           "avdSubnetId": {
             "value": "[if(empty(parameters('virtualNetwork')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'network'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'net')), '2020-10-01').outputs.workloadSubnetId.value, parameters('computeSubnetId'))]"
           },
@@ -2279,7 +2293,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "14413220628982521967"
+              "templateHash": "11046766096956082883"
             }
           },
           "parameters": {
@@ -2299,12 +2313,14 @@
             "avdSubnetId": {
               "type": "string"
             },
+            "rdshVmSize": {
+              "type": "string"
+            },
             "rdshPrefix": {
               "type": "string"
             },
             "vmCount": {
-              "type": "int",
-              "defaultValue": 1
+              "type": "int"
             },
             "tags": {
               "type": "object",
@@ -2487,6 +2503,9 @@
                   "vmCount": {
                     "value": "[parameters('vmCount')]"
                   },
+                  "rdshVmSize": {
+                    "value": "[parameters('rdshVmSize')]"
+                  },
                   "rdshPrefix": {
                     "value": "[parameters('rdshPrefix')]"
                   },
@@ -2507,7 +2526,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "4849021828354901359"
+                      "templateHash": "5758676699925417372"
                     }
                   },
                   "parameters": {
@@ -2518,6 +2537,9 @@
                       "type": "string"
                     },
                     "avdSubnetId": {
+                      "type": "string"
+                    },
+                    "rdshVmSize": {
                       "type": "string"
                     },
                     "hostPoolRegistrationToken": {
@@ -2600,7 +2622,7 @@
                             "value": "StandardSSD_LRS"
                           },
                           "rdshVmSize": {
-                            "value": "Standard_D2s_v3"
+                            "value": "[parameters('rdshVmSize')]"
                           },
                           "enableAcceleratedNetworking": {
                             "value": true
