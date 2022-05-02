@@ -3,7 +3,7 @@ param namingStructure string
 param subwloadname string = ''
 param containerNames array
 param skuName string = 'Standard_LRS'
-param privatize bool
+param privatize bool = false
 param vnetId string = ''
 param subnetId string = ''
 param principalIds array = []
@@ -31,6 +31,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
       bypass: 'AzureServices'
       defaultAction: privatize ? 'Deny' : 'Allow' // force deny inbound traffic
     }
+    publicNetworkAccess: privatize ? 'Disabled' : 'Enabled'
   }
   tags: tags
 }

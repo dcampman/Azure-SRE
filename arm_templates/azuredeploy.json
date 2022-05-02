@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "11079366255748916892"
+      "templateHash": "2712576612895495954"
     }
   },
   "parameters": {
@@ -409,7 +409,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "10399860008278164957"
+              "templateHash": "408613957688838685"
             }
           },
           "parameters": {
@@ -431,7 +431,8 @@
               "defaultValue": "Standard_LRS"
             },
             "privatize": {
-              "type": "bool"
+              "type": "bool",
+              "defaultValue": false
             },
             "vnetId": {
               "type": "string",
@@ -475,7 +476,8 @@
                 "networkAcls": {
                   "bypass": "AzureServices",
                   "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]"
-                }
+                },
+                "publicNetworkAccess": "[if(parameters('privatize'), 'Disabled', 'Enabled')]"
               },
               "tags": "[parameters('tags')]"
             },
@@ -667,7 +669,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "8990564759967678517"
+              "templateHash": "15374500964588699446"
             }
           },
           "parameters": {
@@ -1411,7 +1413,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "10399860008278164957"
+                      "templateHash": "408613957688838685"
                     }
                   },
                   "parameters": {
@@ -1433,7 +1435,8 @@
                       "defaultValue": "Standard_LRS"
                     },
                     "privatize": {
-                      "type": "bool"
+                      "type": "bool",
+                      "defaultValue": false
                     },
                     "vnetId": {
                       "type": "string",
@@ -1477,7 +1480,8 @@
                         "networkAcls": {
                           "bypass": "AzureServices",
                           "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]"
-                        }
+                        },
+                        "publicNetworkAccess": "[if(parameters('privatize'), 'Disabled', 'Enabled')]"
                       },
                       "tags": "[parameters('tags')]"
                     },
