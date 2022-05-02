@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "11467385624586629033"
+      "templateHash": "3355555650691792069"
     }
   },
   "parameters": {
@@ -260,7 +260,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "6283016673086334586"
+              "templateHash": "3927517824459171522"
             }
           },
           "parameters": {
@@ -375,7 +375,7 @@
               "condition": "[not(empty(parameters('hubVirtualNetwork')))]",
               "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
               "apiVersion": "2021-05-01",
-              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('hubVirtualNetwork').name))]",
+              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-hub', replace(variables('baseName'), '{rtype}', 'vnet')))]",
               "properties": {
                 "allowForwardedTraffic": true,
                 "allowGatewayTransit": false,
@@ -397,11 +397,11 @@
             },
             "pepSubnetId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').privateEndpoints.value.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').privateEndpoints.value.name), '/')[1])]"
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').privateEndpoints.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').privateEndpoints.name), '/')[1])]"
             },
             "workloadSubnetId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.value.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.value.name), '/')[1])]"
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.name), '/')[1])]"
             }
           }
         }
