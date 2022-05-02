@@ -11,7 +11,7 @@ param tags object = {}
 
 var assignRole = !empty(principalIds)
 var baseName = !empty(subwloadname) ? replace(namingStructure, '{subwloadname}', subwloadname) : replace(namingStructure, '-{subwloadname}', '')
-var stgNameClean = replace(take(guid(subscription().id, resourceGroup().id, baseName), 22), '-', '')
+var stgNameClean = take(replace(guid(subscription().id, resourceGroup().id, baseName), '-', ''), 22)
 var endpoint = 'privatelink.blob.${environment().suffixes.storage}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
