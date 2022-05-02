@@ -1,6 +1,6 @@
 param location string
 param namingStructure string
-param subwloadname string = ''
+param subwloadname string
 param containerNames array
 param skuName string = 'Standard_LRS'
 param privatize bool = false
@@ -11,11 +11,11 @@ param tags object = {}
 
 var assignRole = !empty(principalIds)
 var baseName = !empty(subwloadname) ? replace(namingStructure, '{subwloadname}', subwloadname) : replace(namingStructure, '-{subwloadname}', '')
-var baseNameClean = replace(baseName, '-', '')
+var stgNameClean = replace(take(guid(subscription().id, resourceGroup().id, baseName), 22), '-', '')
 var endpoint = 'privatelink.blob.${environment().suffixes.storage}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
-  name: take(replace(baseNameClean, '{rtype}', 'stg'), 24)
+  name: 'st${stgNameClean}'
   location: location
   kind: 'StorageV2'
   sku: {

@@ -131,7 +131,7 @@ resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
   name: '${adf.name}/pipe-data_move'
   properties: {
     activities: [
-      json(loadTextContent('./adfPipeline.json'))
+      json(loadTextContent('../content/adfPipeline.json'))
     ]
     parameters: {
       sourceStorageAccountName: {

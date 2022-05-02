@@ -68,7 +68,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    definition: json(loadTextContent('./logicAppWorkflow.json'))
+    definition: json(loadTextContent('../content/logicAppWorkflow.json'))
     parameters: {
       '$connections': {
         value: {
