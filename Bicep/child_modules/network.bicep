@@ -85,11 +85,11 @@ resource peerToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@202
 }
 
 resource pepSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' existing = {
-  name: '${virtual_network.name}/${subnets['privateEndpoints'].value.name}'
+  name: '${virtual_network.name}/${subnets['privateEndpoints'].name}'
 }
 
 resource workloadSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' existing = {
-  name: '${virtual_network.name}/${subnets['compute'].value.name}'
+  name: '${virtual_network.name}/${subnets['compute'].name}'
 }
 
 output vnetId string = virtual_network.id
