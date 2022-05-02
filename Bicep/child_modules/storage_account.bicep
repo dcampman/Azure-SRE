@@ -30,8 +30,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: privatize ? 'Deny' : 'Allow' // force deny inbound traffic
-      ipRules: [] // Dont allow any IPs through the firewall
-      virtualNetworkRules: [] // Do not integrate via vnet due to service delegation requirements
     }
   }
   tags: tags

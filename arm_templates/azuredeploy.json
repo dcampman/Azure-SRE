@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "11036590355805183055"
+      "templateHash": "11079366255748916892"
     }
   },
   "parameters": {
@@ -409,7 +409,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "9692592380728435839"
+              "templateHash": "10399860008278164957"
             }
           },
           "parameters": {
@@ -474,9 +474,7 @@
                 "accessTier": "Hot",
                 "networkAcls": {
                   "bypass": "AzureServices",
-                  "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]",
-                  "ipRules": [],
-                  "virtualNetworkRules": []
+                  "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]"
                 }
               },
               "tags": "[parameters('tags')]"
@@ -669,7 +667,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "5711938612232167104"
+              "templateHash": "8990564759967678517"
             }
           },
           "parameters": {
@@ -1413,7 +1411,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "9692592380728435839"
+                      "templateHash": "10399860008278164957"
                     }
                   },
                   "parameters": {
@@ -1478,9 +1476,7 @@
                         "accessTier": "Hot",
                         "networkAcls": {
                           "bypass": "AzureServices",
-                          "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]",
-                          "ipRules": [],
-                          "virtualNetworkRules": []
+                          "defaultAction": "[if(parameters('privatize'), 'Deny', 'Allow')]"
                         }
                       },
                       "tags": "[parameters('tags')]"
