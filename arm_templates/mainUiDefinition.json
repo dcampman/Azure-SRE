@@ -263,7 +263,7 @@
                   ],
                   "required": true
                 },
-                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
+                "visible": true
               },
               {
                 "name": "hubVnetSelector",
@@ -276,7 +276,7 @@
                     "subscription": "all"
                   }
                 },
-                "visible": "[and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub)]"
+                "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
               },
               {
                 "name": "defaultRouteNextHop",
