@@ -16,5 +16,5 @@
 
 Measure-Command -Expression {
 	Write-Output "`nDeploying Environment"
-	$deployment = New-AzDeployment -TemplateFile main.bicep -Location $location -Name  "tre-$deploymentTime" -TemplateParameterObject $Parameters
+	New-AzDeployment -TemplateFile ../root_modules/main.bicep -Location $location -Name  "tre-$deploymentTime" -TemplateParameterObject $Parameters
 }

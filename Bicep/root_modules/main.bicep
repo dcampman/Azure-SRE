@@ -16,6 +16,8 @@ param workspaceName string
 param approverEmail string
 param sequence int = 1
 param tags object = {}
+
+// existing resource objects
 param avdAccess bool = false
 param virtualNetwork object = {}
 param computeSubnetId string = ''
@@ -84,7 +86,7 @@ resource sharedWorkspaceRG 'Microsoft.Resources/resourceGroups@2021-04-01' = if 
 }
 
 // create the log analytics workspace resource if the logAnalytics object wasn't supplied at deployment
-module workspaceLaw '../Bicep/child_modules/logAnalytics.bicep' = if (empty(logAnalytics)) {
+module workspaceLaw '../child_modules/logAnalytics.bicep' = if (empty(logAnalytics)) {
   name: replace(deploymentNameStructure, '{rtype}', 'law')
   scope: sharedWorkspaceRG
   params: {
@@ -104,7 +106,7 @@ resource newNetworkWorkspaceRG 'Microsoft.Resources/resourceGroups@2021-04-01' =
 }
 
 // create the virtual network if the virtualNetwork object wasn't supplied at deployment
-module workspaceVnet '../Bicep/child_modules/network.bicep' = if (empty(virtualNetwork)) {
+module workspaceVnet '../child_modules/network.bicep' = if (empty(virtualNetwork)) {
   name: replace(deploymentNameStructure, '{rtype}', 'net')
   scope: newNetworkWorkspaceRG
   params: {
@@ -137,7 +139,7 @@ resource newDataWorkspaceRG 'Microsoft.Resources/resourceGroups@2021-04-01' = if
 }
 
 // create the private storage account if the storageAccount object wasn't supplied at deployment
-module newPrivateStorageAccount '../Bicep/child_modules/storage_account.bicep' = if (empty(privateStorage)) {
+module newPrivateStorageAccount '../child_modules/storage_account.bicep' = if (empty(privateStorage)) {
   name: replace(deploymentNameStructure, '{rtype}', 'stg-pri')
   scope: newDataWorkspaceRG
   params: {

@@ -9,6 +9,7 @@ param privateStorageAccountRG string
 param containerNames object
 param approverEmail string
 param tags object = {}
+param userAssignedManagedIdentity object = {}
 
 var uamiRoles = {
   'Storage Account Contributor': subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab')
@@ -20,13 +21,22 @@ resource dataAutomationRG 'Microsoft.Resources/resourceGroups@2021-04-01' existi
   name: privateStorageAccountRG
 }
 
-resource storageaccount 'Microsoft.Storage/storageAccounts@2021-02-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' existing = {
   name: privateStorageAccountName
   scope: dataAutomationRG
 }
 
+resource existingUamiRG 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(userAssignedManagedIdentity)) {
+  name: split(userAssignedManagedIdentity.id, '/')[3]
+}
+
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = if (!empty(userAssignedManagedIdentity)) {
+  name: userAssignedManagedIdentity.id
+  scope: existingUamiRG
+}
+
 // user assigned managed identity for Post Deployment Tasks
-module uami '../child_modules/uami.bicep' = {
+module uami '../child_modules/uami.bicep' = if (empty(userAssignedManagedIdentity)) {
   name: replace(deploymentNameStructure, '{rtype}', 'uami')
   scope: dataAutomationRG
   params: {
@@ -47,7 +57,7 @@ module adf '../child_modules/adf.bicep' = {
     location: location
     deploymentNameStructure: deploymentNameStructure
     privateStorageAcctName: privateStorageAccountName
-    userAssignedIdentityId: uami.outputs.managedIdentityId
+    userAssignedIdentityId: !empty(userAssignedManagedIdentity) ? userAssignedManagedIdentity.id : uami.outputs.managedIdentityId
     tags: tags
   }
 }
@@ -107,7 +117,7 @@ module eventGridForPrivate '../child_modules/eventGrid.bicep' = {
     location: location
     namingStructure: namingStructure
     subwloadname: privateStorageAccountName
-    resourceId: storageaccount.id
+    resourceId: storageAccount.id
     topicName: 'Microsoft.Storage.StorageAccounts'
     tags: tags
   }
@@ -135,7 +145,7 @@ module exportTrigger '../child_modules/adfTrigger.bicep' = {
   params: {
     adfName: adf.outputs.name
     workspaceName: workspaceName
-    storageAccountId: storageaccount.id
+    storageAccountId: storageAccount.id
     storageAccountType: 'Private'
     ingestPipelineName: 'pipe-data_move'
     sourceStorageAccountName: privateStorageAccountName
@@ -149,7 +159,7 @@ module adfManagedPrivateEndpoint '../child_modules/adfManagedPrivateEndpoint.bic
   scope: dataAutomationRG
   params: {
     adfName: adf.outputs.name
-    privateStorageAccountId: storageaccount.id
+    privateStorageAccountId: storageAccount.id
     privateStorageAccountName: privateStorageAccountName
   }
 }
@@ -164,7 +174,7 @@ module deploymentScript '../child_modules/deploymentScript.bicep' = {
     namingStructure: namingStructure
     arguments: ' -ResourceGroupName ${dataAutomationRG.name} -azureDataFactoryName ${adf.outputs.name} -privateLinkResourceId ${adfManagedPrivateEndpoint.outputs.privateEndpointId}'
     scriptContent: '\r\n          param(\r\n            [string] [Parameter(Mandatory=$true)] $ResourceGroupName,\r\n            [string] [Parameter(Mandatory=$true)] $azureDataFactoryName,\r\n            [string] [Parameter(Mandatory=$true)] $privateLinkResourceId\r\n          )\r\n\r\n          Connect-AzAccount -Identity\r\n\r\n          # Start Triggers\r\n          Get-AzDataFactoryV2Trigger -DataFactoryName $azureDataFactoryName -ResourceGroupName $ResourceGroupName | Start-AzDataFactoryV2Trigger -Force | Out-Null\r\n\r\n          # Approve DFS private endpoint\r\n          foreach ($privateLinkConnection in (Get-AzPrivateEndpointConnection -PrivateLinkResourceId $privateLinkResourceId)) { if ($privateLinkConnection.PrivateLinkServiceConnectionState.Status -eq "Pending") { Approve-AzPrivateEndpointConnection -ResourceId $privateLinkConnection.id } }\r\n        '
-    userAssignedIdentityId: uami.outputs.managedIdentityId
+    userAssignedIdentityId: !empty(userAssignedManagedIdentity) ? userAssignedManagedIdentity.id : uami.outputs.managedIdentityId
     tags: tags
   }
 }
