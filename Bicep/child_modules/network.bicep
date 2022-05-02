@@ -70,7 +70,7 @@ resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in item
   tags: tags
 }]
 
-resource symbolicname 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetwork)) {
+resource peerToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetwork)) {
   name: '${virtual_network.name}-to-${hubVirtualNetwork.name}'
   parent: virtual_network
   properties: {
