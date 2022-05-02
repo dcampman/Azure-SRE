@@ -29,16 +29,15 @@ jobs:
           curl -Lo bicepinstall https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64
           chmod +x ./bicepinstall
           sudo mv ./bicepinstall /usr/local/bin/bicep
-          bicep --help
+          bicep --version
 
       - name: Run Bicep build
         run: |
-          bicep build Bicep/deploy/main.bicep
-          ls -l Bicep/deploy/*.json
+          bicep build Bicep/root_modules/main.bicep --outfile arm_templates/azuredeploy.json
 
       - uses: EndBug/add-and-commit@v7.0.0
         with:
           author_name: github-actions
           author_email: "dcampman@users.noreply.github.com"
           message: "Github Action: Update Bicep-ARM template"
-          add: Bicep/deploy/main.json
+          add: arm_templates/azuredeploy.json

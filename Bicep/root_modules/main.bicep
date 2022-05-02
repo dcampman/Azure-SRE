@@ -22,6 +22,8 @@ param avdAccess bool = false
 param rdshVmSize string = 'Standard_D2s_v3'
 param vmCount int = 1
 param virtualNetwork object = {}
+param hubVirtualNetwork object = {}
+param defaultRouteNextHop string = ''
 param computeSubnetId string = ''
 param privateEndpointSubnetId string = ''
 param privateStorage object = {}
@@ -46,24 +48,26 @@ var containerNames = {
   'exportPendingContainerName': 'export-pending'
 }
 
+// vnet configuration if building new virtual network for research workspace
 var vnetAddressPrefixes = [
   '172.17.0.0/24'
 ]
 
-var subnets = [
-  {
-    name: 'privateEndpoints' // this is hard coded in a resource lookup
+// subnet configuration if building new virtual network for research workspace
+var subnets = {
+  'privateEndpoints': {
+    name: 'privateEndpoints' // this is hard coded in a resource lookup in ../child_modules/network.bicep.
     addressPrefix: '172.17.0.0/25'
     privateEndpointNetworkPolicies: 'Enabled'
     serviceEndpoints: []
   }
-  {
-    name: 'compute' // this is hard coded in a resource lookup
+  'compute': {
+    name: 'compute' // this is hard coded in a resource lookup in ../child_modules/network.bicep.
     addressPrefix: '172.17.0.128/25'
     privateEndpointNetworkPolicies: 'Disabled'
     serviceEndpoints: []
   }
-]
+}
 
 //########################################################################//
 //                                                                        //
@@ -117,9 +121,13 @@ module workspaceVnet '../child_modules/network.bicep' = if (empty(virtualNetwork
     namingStructure: namingStructure
     addressPrefixes: vnetAddressPrefixes
     subnets: subnets
+    defaultRouteNextHop: defaultRouteNextHop
+    hubVirtualNetwork: hubVirtualNetwork
     tags: tags
   }
 }
+
+// add peer if exists.
 
 //##################################################################################################################################################################################
 

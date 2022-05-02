@@ -249,7 +249,7 @@
                 "type": "Microsoft.Common.OptionsGroup",
                 "label": "Peer to an existing HUB?",
                 "defaultValue": "No",
-                "toolTip": "",
+                "toolTip": "Will the workspace virtual network need to be peered with an existing hub virtual network? If so, you will need to manage NSG rules and specific routes on those resources deployed fomr this template. If this option is not selected, a default NSG rule will be placed on all NSGs to limit internet access.",
                 "constraints": {
                   "allowedValues": [
                     {
@@ -263,7 +263,7 @@
                   ],
                   "required": true
                 },
-                "visible": true
+                "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               },
               {
                 "name": "hubVnetSelector",
@@ -272,6 +272,19 @@
                 "resourceType": "Microsoft.Network/virtualNetworks",
                 "options": {
                   "filter": {}
+                },
+                "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
+              },
+              {
+                "name": "defaultRouteNextHop",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Next Hop IP Address",
+                "defaultValue": "",
+                "toolTip": "Optional 'next hop' address for default 0.0.0.0/0 rule on all route tables. If you intend to manage routing separately, please do not fill in this parameter.",
+                "constraints": {
+                  "required": false,
+                  "regex": "",
+                  "validationMessage": ""
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
               }
@@ -327,7 +340,7 @@
                 "name": "avdAccess",
                 "type": "Microsoft.Common.OptionsGroup",
                 "label": "Add AVD Access to environment",
-                "defaultValue": "Yes",
+                "defaultValue": "No",
                 "toolTip": "",
                 "constraints": {
                   "allowedValues": [
@@ -459,6 +472,8 @@
       "vmCount": "[steps('workspaceConfig').remoteAccessSection.vmCount]",
       "approverEmail": "[steps('dataAutomationConfig').dataAutomationSection.approverEmail]",
       "virtualNetwork": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.vnetSelector, parse('{}'))]",
+      "hubVnetSelector": "[if(and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub), steps('workspaceConfig').networkingSection.hubVnetSelector, parse('{}'))]",
+      "defaultRouteNextHop": "",
       "computeSubnetId": "[if(and(steps('workspaceConfig').remoteAccessSection.avdAccess, steps('workspaceConfig').networkingSection.newOrExistingVnet), concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').remoteAccessSection.computeSubnetDropDown), '')]",
       "privateEndpointSubnetId": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.privateEndpointSubnetDropDown), '')]",
       "PrivateStorage": "[if(steps('workspaceConfig').storageSection.newOrExistingStorage, steps('workspaceConfig').storageSection.storageSelector, parse('{}'))]",

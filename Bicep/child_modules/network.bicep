@@ -3,9 +3,10 @@ param namingStructure string
 param subwloadname string = ''
 param addressPrefixes array
 param dnsServers array = []
-param subnets array
+param subnets object
 param nsgSecurityRules array = []
 param defaultRouteNextHop string = ''
+param hubVirtualNetwork object = {}
 param tags object = {}
 
 var customDNS = !empty(dnsServers)
@@ -22,11 +23,11 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
     dhcpOptions: customDNS ? {
       dnsServers: dnsServers
     } : json('null')
-    subnets: [for (s, index) in subnets: {
-      name: s.name
+    subnets: [for (s, index) in items(subnets): {
+      name: s.value.name
       properties: {
-        addressPrefix: s.addressPrefix
-        privateEndpointNetworkPolicies: !empty(s.privateEndpointNetworkPolicies) ? 'Disabled' : s.privateEndpointNetworkPolicies
+        addressPrefix: s.value.addressPrefix
+        privateEndpointNetworkPolicies: !empty(s.value.privateEndpointNetworkPolicies) ? 'Disabled' : s.value.privateEndpointNetworkPolicies
         networkSecurityGroup: {
           id: networkSecurityGroups[index].id
         }
@@ -40,8 +41,8 @@ resource virtual_network 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 }
 
 // create nsgs
-resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for s in subnets: {
-  name: 'nsg-${s.name}'
+resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2021-05-01' = [for s in items(subnets): {
+  name: 'nsg-${s.value.name}'
   location: location
   properties: {
     securityRules: !empty(nsgSecurityRules) ? nsgSecurityRules : json('null')
@@ -50,8 +51,8 @@ resource networkSecurityGroups 'Microsoft.Network/networkSecurityGroups@2021-05-
 }]
 
 // create route tables
-resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in subnets: {
-  name: 'rt-${s.name}'
+resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in items(subnets): {
+  name: 'rt-${s.value.name}'
   location: location
   properties: {
     disableBgpRoutePropagation: true
@@ -69,12 +70,26 @@ resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in subn
   tags: tags
 }]
 
+resource symbolicname 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetwork)) {
+  name: '${virtual_network.name}-to-${hubVirtualNetwork.name}'
+  parent: virtual_network
+  properties: {
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    allowVirtualNetworkAccess: true
+    remoteVirtualNetwork: {
+      id: hubVirtualNetwork.id
+    }
+    useRemoteGateways: false
+  }
+}
+
 resource pepSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' existing = {
-  name: '${virtual_network.name}/privateEndpoints'
+  name: '${virtual_network.name}/${subnets['privateEndpoints'].value.name}'
 }
 
 resource workloadSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' existing = {
-  name: '${virtual_network.name}/compute'
+  name: '${virtual_network.name}/${subnets['compute'].value.name}'
 }
 
 output vnetId string = virtual_network.id
