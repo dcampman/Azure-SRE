@@ -271,10 +271,7 @@
                 "label": "Hub Virtual Network",
                 "resourceType": "Microsoft.Network/virtualNetworks",
                 "options": {
-                  "filter": {
-                    "location": "all",
-                    "subscription": "all"
-                  }
+                  "filter": {}
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
               },
