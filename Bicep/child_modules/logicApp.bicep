@@ -2,6 +2,7 @@ param location string
 param namingStructure string
 param subwloadname string = ''
 param adfName string
+param pipelineName string
 param storageAcctName string
 param approverEmail string
 param tags object = {}
@@ -107,6 +108,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       }
       dataFactoryName: {
         value: adf.name
+      }
+      pipelineName: {
+        value: pipelineName
       }
       storageAccountName: {
         value: storageAcctName

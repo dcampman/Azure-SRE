@@ -25,6 +25,7 @@ param privateEndpointSubnetId string = ''
 param privateStorage object = {}
 param logAnalytics object = {}
 param userAssignedManagedIdentity object = {}
+param pipelineName string = 'pipe-data_move'
 
 //########################################################################//
 //                                                                        //
@@ -173,6 +174,7 @@ module dataAutomation './dataAutomation.bicep' = {
     namingStructure: namingStructure
     deploymentNameStructure: deploymentNameStructure
     containerNames: containerNames
+    pipelineName: pipelineName
     privateStorageAccountName: empty(privateStorage) ? newPrivateStorageAccount.outputs.storageAccountName : existingPrivateStorageAccount.name
     privateStorageAccountRG: empty(privateStorage) ? newDataWorkspaceRG.name : existingPrivateStorageRG.name
     approverEmail: approverEmail

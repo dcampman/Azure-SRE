@@ -8,6 +8,7 @@ param privateStorageAccountName string
 param privateStorageAccountRG string
 param containerNames object
 param approverEmail string
+param pipelineName string
 param tags object = {}
 param userAssignedManagedIdentity object = {}
 
@@ -57,6 +58,7 @@ module adf '../child_modules/adf.bicep' = {
     location: location
     deploymentNameStructure: deploymentNameStructure
     privateStorageAcctName: privateStorageAccountName
+    pipelineName: pipelineName
     userAssignedIdentityId: !empty(userAssignedManagedIdentity) ? userAssignedManagedIdentity.id : uami.outputs.managedIdentityId
     tags: tags
   }
@@ -71,6 +73,7 @@ module logicApp '../child_modules/logicApp.bicep' = {
     location: location
     storageAcctName: privateStorageAccountName
     adfName: adf.outputs.name
+    pipelineName: pipelineName
     approverEmail: approverEmail
     tags: tags
   }
@@ -132,7 +135,7 @@ module ingestTrigger '../child_modules/adfTrigger.bicep' = {
     workspaceName: workspaceName
     storageAccountId: publicStorageAccount.outputs.storageAccountId
     storageAccountType: 'Public'
-    ingestPipelineName: 'pipe-data_move'
+    ingestPipelineName: pipelineName
     sourceStorageAccountName: publicStorageAccount.outputs.storageAccountName
     sinkStorageAccountName: privateStorageAccountName
     containerName: containerNames['ingestContainerName']
@@ -147,7 +150,7 @@ module exportTrigger '../child_modules/adfTrigger.bicep' = {
     workspaceName: workspaceName
     storageAccountId: storageAccount.id
     storageAccountType: 'Private'
-    ingestPipelineName: 'pipe-data_move'
+    ingestPipelineName: pipelineName
     sourceStorageAccountName: privateStorageAccountName
     sinkStorageAccountName: publicStorageAccount.outputs.storageAccountName
     containerName: containerNames['exportApprovedContainerName']

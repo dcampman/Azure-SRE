@@ -2,6 +2,7 @@ param location string
 param namingStructure string
 param deploymentNameStructure string
 param subwloadname string = ''
+param pipelineName string
 param privateStorageAcctName string
 param userAssignedIdentityId string
 param tags object = {}
@@ -128,7 +129,7 @@ resource dfsDataset 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
 }
 
 resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
-  name: '${adf.name}/pipe-data_move'
+  name: '${adf.name}/${pipelineName}'
   properties: {
     activities: [
       json(loadTextContent('../content/adfPipeline.json'))
