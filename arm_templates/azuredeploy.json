@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "2712576612895495954"
+      "templateHash": "42478778020097715"
     }
   },
   "parameters": {
@@ -70,6 +70,10 @@
     "userAssignedManagedIdentity": {
       "type": "object",
       "defaultValue": {}
+    },
+    "pipelineName": {
+      "type": "string",
+      "defaultValue": "pipe-data_move"
     }
   },
   "variables": {
@@ -409,7 +413,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "408613957688838685"
+              "templateHash": "17789712559307078708"
             }
           },
           "parameters": {
@@ -420,8 +424,7 @@
               "type": "string"
             },
             "subwloadname": {
-              "type": "string",
-              "defaultValue": ""
+              "type": "string"
             },
             "containerNames": {
               "type": "array"
@@ -454,14 +457,14 @@
           "variables": {
             "assignRole": "[not(empty(parameters('principalIds')))]",
             "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
-            "baseNameClean": "[replace(variables('baseName'), '-', '')]",
+            "stgNameClean": "[replace(take(guid(subscription().id, resourceGroup().id, variables('baseName')), 22), '-', '')]",
             "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
           },
           "resources": [
             {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2021-06-01",
-              "name": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]",
+              "name": "[format('st{0}', variables('stgNameClean'))]",
               "location": "[parameters('location')]",
               "kind": "StorageV2",
               "sku": {
@@ -484,7 +487,7 @@
             {
               "type": "Microsoft.Storage/storageAccounts/blobServices",
               "apiVersion": "2021-06-01",
-              "name": "[format('{0}/{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
+              "name": "[format('{0}/{1}', format('st{0}', variables('stgNameClean')), 'default')]",
               "properties": {
                 "containerDeleteRetentionPolicy": {
                   "enabled": true,
@@ -495,7 +498,7 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
               ]
             },
             {
@@ -505,10 +508,10 @@
               },
               "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
               "apiVersion": "2021-06-01",
-              "name": "[format('{0}/{1}/{2}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default', parameters('containerNames')[copyIndex()])]",
+              "name": "[format('{0}/{1}/{2}', format('st{0}', variables('stgNameClean')), 'default', parameters('containerNames')[copyIndex()])]",
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
-                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('st{0}', variables('stgNameClean')), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
               ]
             },
             {
@@ -526,7 +529,7 @@
                   {
                     "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
                     "properties": {
-                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
+                      "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]",
                       "groupIds": [
                         "blob"
                       ]
@@ -535,7 +538,7 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
               ]
             },
             {
@@ -591,26 +594,26 @@
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2020-10-01-preview",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
-              "name": "[guid(format('rbac-{0}-{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), parameters('principalIds')[copyIndex()]))]",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', format('st{0}', variables('stgNameClean')))]",
+              "name": "[guid(format('rbac-{0}-{1}', format('st{0}', variables('stgNameClean')), parameters('principalIds')[copyIndex()]))]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
                 "principalId": "[parameters('principalIds')[copyIndex()]]",
                 "principalType": "ServicePrincipal"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
               ]
             }
           ],
           "outputs": {
             "storageAccountId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
             },
             "storageAccountName": {
               "type": "string",
-              "value": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]"
+              "value": "[format('st{0}', variables('stgNameClean'))]"
             }
           }
         }
@@ -646,6 +649,9 @@
           "containerNames": {
             "value": "[variables('containerNames')]"
           },
+          "pipelineName": {
+            "value": "[parameters('pipelineName')]"
+          },
           "privateStorageAccountName": {
             "value": "[if(empty(parameters('privateStorage')), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, replace(replace(variables('namingStructure'), '{subwloadname}', 'storage'), '{rtype}', 'rg')), 'Microsoft.Resources/deployments', replace(variables('deploymentNameStructure'), '{rtype}', 'stg-pri')), '2020-10-01').outputs.storageAccountName.value, parameters('privateStorage').name)]"
           },
@@ -669,7 +675,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "15374500964588699446"
+              "templateHash": "2050086730278823325"
             }
           },
           "parameters": {
@@ -695,6 +701,9 @@
               "type": "object"
             },
             "approverEmail": {
+              "type": "string"
+            },
+            "pipelineName": {
               "type": "string"
             },
             "tags": {
@@ -831,6 +840,9 @@
                   "privateStorageAcctName": {
                     "value": "[parameters('privateStorageAccountName')]"
                   },
+                  "pipelineName": {
+                    "value": "[parameters('pipelineName')]"
+                  },
                   "userAssignedIdentityId": {
                     "value": "[if(not(empty(parameters('userAssignedManagedIdentity'))), parameters('userAssignedManagedIdentity').id, reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'uami')), '2020-10-01').outputs.managedIdentityId.value)]"
                   },
@@ -845,7 +857,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "5073816896388352871"
+                      "templateHash": "8627333561520133072"
                     }
                   },
                   "parameters": {
@@ -861,6 +873,9 @@
                     "subwloadname": {
                       "type": "string",
                       "defaultValue": ""
+                    },
+                    "pipelineName": {
+                      "type": "string"
                     },
                     "privateStorageAcctName": {
                       "type": "string"
@@ -993,7 +1008,7 @@
                     {
                       "type": "Microsoft.DataFactory/factories/pipelines",
                       "apiVersion": "2018-06-01",
-                      "name": "[format('{0}/pipe-data_move', replace(variables('baseName'), '{rtype}', 'adf'))]",
+                      "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'adf'), parameters('pipelineName'))]",
                       "properties": {
                         "activities": [
                           "[json('{\r\n\t\"name\": \"Move Data\",\r\n\t\"type\": \"Copy\",\r\n\t\"dependsOn\": [],\r\n\t\"policy\": {\r\n\t\t\"timeout\": \"7.00:00:00\",\r\n\t\t\"retry\": 0,\r\n\t\t\"retryIntervalInSeconds\": 30,\r\n\t\t\"secureOutput\": false,\r\n\t\t\"secureInput\": false\r\n\t},\r\n\t\"userProperties\": [],\r\n\t\"typeProperties\": {\r\n\t\t\"source\": {\r\n\t\t\t\"type\": \"BinarySource\",\r\n\t\t\t\"storeSettings\": {\r\n\t\t\t\t\"type\": \"AzureBlobFSReadSettings\",\r\n\t\t\t\t\"recursive\": true,\r\n\t\t\t\t\"deleteFilesAfterCompletion\": true\r\n\t\t\t},\r\n\t\t\t\"formatSettings\": {\r\n\t\t\t\t\"type\": \"BinaryReadSettings\"\r\n\t\t\t}\r\n\t\t},\r\n\t\t\"sink\": {\r\n\t\t\t\"type\": \"BinarySink\",\r\n\t\t\t\"storeSettings\": {\r\n\t\t\t\t\"type\": \"AzureBlobFSWriteSettings\"\r\n\t\t\t}\r\n\t\t},\r\n\t\t\"enableStaging\": false\r\n\t},\r\n\t\"inputs\": [\r\n\t\t{\r\n\t\t\t\"referenceName\": \"DfsDataset\",\r\n\t\t\t\"type\": \"DatasetReference\",\r\n\t\t\t\"parameters\": {\r\n\t\t\t\t\"storageAccountName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceStorageAccountName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"folderPath\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sourceFolderPath\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"fileName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t],\r\n\t\"outputs\": [\r\n\t\t{\r\n\t\t\t\"referenceName\": \"DfsDataset\",\r\n\t\t\t\"type\": \"DatasetReference\",\r\n\t\t\t\"parameters\": {\r\n\t\t\t\t\"storageAccountName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkStorageAccountName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"folderPath\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.sinkFolderPath\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t},\r\n\t\t\t\t\"fileName\": {\r\n\t\t\t\t\t\"value\": \"@pipeline().parameters.fileName\",\r\n\t\t\t\t\t\"type\": \"Expression\"\r\n\t\t\t\t}\r\n\t\t\t}\r\n\t\t}\r\n\t]\r\n}')]"
@@ -1177,6 +1192,9 @@
                   "adfName": {
                     "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'adf'))).outputs.name.value]"
                   },
+                  "pipelineName": {
+                    "value": "[parameters('pipelineName')]"
+                  },
                   "approverEmail": {
                     "value": "[parameters('approverEmail')]"
                   },
@@ -1191,7 +1209,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "2831339259807719703"
+                      "templateHash": "13636174713424972637"
                     }
                   },
                   "parameters": {
@@ -1206,6 +1224,9 @@
                       "defaultValue": ""
                     },
                     "adfName": {
+                      "type": "string"
+                    },
+                    "pipelineName": {
                       "type": "string"
                     },
                     "storageAcctName": {
@@ -1279,7 +1300,7 @@
                         "type": "SystemAssigned"
                       },
                       "properties": {
-                        "definition": "[json('{\r\n  \"$schema\": \"https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#\",\r\n  \"contentVersion\": \"1.0.0.0\",\r\n  \"parameters\": {\r\n    \"$connections\": {\r\n      \"defaultValue\": {},\r\n      \"type\": \"Object\"\r\n    },\r\n    \"subscriptionId\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryRG\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"storageAccountName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"approverEmail\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    }\r\n  },\r\n  \"triggers\": {\r\n    \"When_a_blob_is_added_or_modified_(properties_only)_(V2)\": {\r\n      \"evaluatedRecurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"inputs\": {\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''azureblob''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"method\": \"get\",\r\n        \"path\": \"/v2/datasets/@{parameters(''storageAccountName'')}/triggers/batch/onupdatedfile\",\r\n        \"queries\": {\r\n          \"checkBothCreatedAndModifiedDateTime\": false,\r\n          \"folderId\": \"/export-pending\",\r\n          \"maxFileCount\": 1\r\n        }\r\n      },\r\n      \"recurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"splitOn\": \"@triggerBody()\",\r\n      \"type\": \"ApiConnection\"\r\n    }\r\n  },\r\n  \"actions\": {\r\n    \"Condition\": {\r\n      \"actions\": {\r\n        \"Create_a_pipeline_run\": {\r\n          \"inputs\": {\r\n            \"body\": {\r\n              \"fileName\": \"@triggerBody()?[''Name'']\",\r\n              \"sinkFolderPath\": \"export-approved\",\r\n              \"sinkStorageAccountName\": \"@parameters(''storageAccountName'')\",\r\n              \"sourceFolderPath\": \"export-pending\",\r\n              \"sourceStorageAccountName\": \"@parameters(''storageAccountName'')\"\r\n            },\r\n            \"host\": {\r\n              \"connection\": {\r\n                \"name\": \"@parameters(''$connections'')[''azuredatafactory''][''connectionId'']\"\r\n              }\r\n            },\r\n            \"method\": \"post\",\r\n            \"path\": \"/subscriptions/@{parameters(''subscriptionId'')}/resourcegroups/@{parameters(''dataFactoryRG'')}/providers/Microsoft.DataFactory/factories/@{parameters(''dataFactoryName'')}/pipelines/@{encodeURIComponent(''pipe-data_move'')}/CreateRun\",\r\n            \"queries\": {\r\n              \"x-ms-api-version\": \"2017-09-01-preview\"\r\n            }\r\n          },\r\n          \"runAfter\": {},\r\n          \"type\": \"ApiConnection\"\r\n        }\r\n      },\r\n      \"expression\": {\r\n        \"and\": [\r\n          {\r\n            \"equals\": [\r\n              \"@body(''Send_approval_email'')?[''SelectedOption'']\",\r\n              \"Approve\"\r\n            ]\r\n          }\r\n        ]\r\n      },\r\n      \"runAfter\": {\r\n        \"Send_approval_email\": [\"Succeeded\"]\r\n      },\r\n      \"type\": \"If\"\r\n    },\r\n    \"Send_approval_email\": {\r\n      \"inputs\": {\r\n        \"body\": {\r\n          \"Message\": {\r\n            \"HideHTMLMessage\": false,\r\n            \"Importance\": \"Normal\",\r\n            \"Options\": \"Approve, Reject\",\r\n            \"ShowHTMLConfirmationDialog\": false,\r\n            \"Subject\": \"Approval Request\",\r\n            \"To\": \"@parameters(''approverEmail'')\"\r\n          },\r\n          \"NotificationUrl\": \"@{listCallbackUrl()}\"\r\n        },\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''office365''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"path\": \"/approvalmail/$subscriptions\"\r\n      },\r\n      \"runAfter\": {},\r\n      \"type\": \"ApiConnectionWebhook\"\r\n    }\r\n  },\r\n  \"outputs\": {}\r\n}\r\n')]",
+                        "definition": "[json('{\r\n  \"$schema\": \"https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#\",\r\n  \"contentVersion\": \"1.0.0.0\",\r\n  \"parameters\": {\r\n    \"$connections\": {\r\n      \"defaultValue\": {},\r\n      \"type\": \"Object\"\r\n    },\r\n    \"subscriptionId\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryRG\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"dataFactoryName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"pipelineName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"storageAccountName\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    },\r\n    \"approverEmail\": {\r\n      \"defaultValue\": \"\",\r\n      \"type\": \"String\"\r\n    }\r\n  },\r\n  \"triggers\": {\r\n    \"When_a_blob_is_added_or_modified_(properties_only)_(V2)\": {\r\n      \"evaluatedRecurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"inputs\": {\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''azureblob''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"method\": \"get\",\r\n        \"path\": \"/v2/datasets/@{parameters(''storageAccountName'')}/triggers/batch/onupdatedfile\",\r\n        \"queries\": {\r\n          \"checkBothCreatedAndModifiedDateTime\": false,\r\n          \"folderId\": \"/export-pending\",\r\n          \"maxFileCount\": 1\r\n        }\r\n      },\r\n      \"recurrence\": {\r\n        \"frequency\": \"Minute\",\r\n        \"interval\": 1\r\n      },\r\n      \"splitOn\": \"@triggerBody()\",\r\n      \"type\": \"ApiConnection\"\r\n    }\r\n  },\r\n  \"actions\": {\r\n    \"Condition\": {\r\n      \"actions\": {\r\n        \"Create_a_pipeline_run\": {\r\n          \"inputs\": {\r\n            \"body\": {\r\n              \"fileName\": \"@triggerBody()?[''Name'']\",\r\n              \"sinkFolderPath\": \"export-approved\",\r\n              \"sinkStorageAccountName\": \"@parameters(''storageAccountName'')\",\r\n              \"sourceFolderPath\": \"export-pending\",\r\n              \"sourceStorageAccountName\": \"@parameters(''storageAccountName'')\"\r\n            },\r\n            \"host\": {\r\n              \"connection\": {\r\n                \"name\": \"@parameters(''$connections'')[''azuredatafactory''][''connectionId'']\"\r\n              }\r\n            },\r\n            \"method\": \"post\",\r\n            \"path\": \"/subscriptions/@{parameters(''subscriptionId'')}/resourcegroups/@{parameters(''dataFactoryRG'')}/providers/Microsoft.DataFactory/factories/@{parameters(''dataFactoryName'')}/pipelines/@{encodeURIComponent(''@{parameters(''pipelineName'')'')}/CreateRun\",\r\n            \"queries\": {\r\n              \"x-ms-api-version\": \"2017-09-01-preview\"\r\n            }\r\n          },\r\n          \"runAfter\": {},\r\n          \"type\": \"ApiConnection\"\r\n        }\r\n      },\r\n      \"expression\": {\r\n        \"and\": [\r\n          {\r\n            \"equals\": [\r\n              \"@body(''Send_approval_email'')?[''SelectedOption'']\",\r\n              \"Approve\"\r\n            ]\r\n          }\r\n        ]\r\n      },\r\n      \"runAfter\": {\r\n        \"Send_approval_email\": [\"Succeeded\"]\r\n      },\r\n      \"type\": \"If\"\r\n    },\r\n    \"Send_approval_email\": {\r\n      \"inputs\": {\r\n        \"body\": {\r\n          \"Message\": {\r\n            \"HideHTMLMessage\": false,\r\n            \"Importance\": \"Normal\",\r\n            \"Options\": \"Approve, Reject\",\r\n            \"ShowHTMLConfirmationDialog\": false,\r\n            \"Subject\": \"Approval Request\",\r\n            \"To\": \"@parameters(''approverEmail'')\"\r\n          },\r\n          \"NotificationUrl\": \"@{listCallbackUrl()}\"\r\n        },\r\n        \"host\": {\r\n          \"connection\": {\r\n            \"name\": \"@parameters(''$connections'')[''office365''][''connectionId'']\"\r\n          }\r\n        },\r\n        \"path\": \"/approvalmail/$subscriptions\"\r\n      },\r\n      \"runAfter\": {},\r\n      \"type\": \"ApiConnectionWebhook\"\r\n    }\r\n  },\r\n  \"outputs\": {}\r\n}\r\n')]",
                         "parameters": {
                           "$connections": {
                             "value": {
@@ -1318,6 +1339,9 @@
                           },
                           "dataFactoryName": {
                             "value": "[parameters('adfName')]"
+                          },
+                          "pipelineName": {
+                            "value": "[parameters('pipelineName')]"
                           },
                           "storageAccountName": {
                             "value": "[parameters('storageAcctName')]"
@@ -1413,7 +1437,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "408613957688838685"
+                      "templateHash": "17789712559307078708"
                     }
                   },
                   "parameters": {
@@ -1424,8 +1448,7 @@
                       "type": "string"
                     },
                     "subwloadname": {
-                      "type": "string",
-                      "defaultValue": ""
+                      "type": "string"
                     },
                     "containerNames": {
                       "type": "array"
@@ -1458,14 +1481,14 @@
                   "variables": {
                     "assignRole": "[not(empty(parameters('principalIds')))]",
                     "baseName": "[if(not(empty(parameters('subwloadname'))), replace(parameters('namingStructure'), '{subwloadname}', parameters('subwloadname')), replace(parameters('namingStructure'), '-{subwloadname}', ''))]",
-                    "baseNameClean": "[replace(variables('baseName'), '-', '')]",
+                    "stgNameClean": "[replace(take(guid(subscription().id, resourceGroup().id, variables('baseName')), 22), '-', '')]",
                     "endpoint": "[format('privatelink.blob.{0}', environment().suffixes.storage)]"
                   },
                   "resources": [
                     {
                       "type": "Microsoft.Storage/storageAccounts",
                       "apiVersion": "2021-06-01",
-                      "name": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]",
+                      "name": "[format('st{0}', variables('stgNameClean'))]",
                       "location": "[parameters('location')]",
                       "kind": "StorageV2",
                       "sku": {
@@ -1488,7 +1511,7 @@
                     {
                       "type": "Microsoft.Storage/storageAccounts/blobServices",
                       "apiVersion": "2021-06-01",
-                      "name": "[format('{0}/{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
+                      "name": "[format('{0}/{1}', format('st{0}', variables('stgNameClean')), 'default')]",
                       "properties": {
                         "containerDeleteRetentionPolicy": {
                           "enabled": true,
@@ -1499,7 +1522,7 @@
                         }
                       },
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
                       ]
                     },
                     {
@@ -1509,10 +1532,10 @@
                       },
                       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
                       "apiVersion": "2021-06-01",
-                      "name": "[format('{0}/{1}/{2}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default', parameters('containerNames')[copyIndex()])]",
+                      "name": "[format('{0}/{1}/{2}', format('st{0}', variables('stgNameClean')), 'default', parameters('containerNames')[copyIndex()])]",
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), 'default')]",
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('st{0}', variables('stgNameClean')), 'default')]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
                       ]
                     },
                     {
@@ -1530,7 +1553,7 @@
                           {
                             "name": "[replace(variables('baseName'), '{rtype}', 'pep')]",
                             "properties": {
-                              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
+                              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]",
                               "groupIds": [
                                 "blob"
                               ]
@@ -1539,7 +1562,7 @@
                         ]
                       },
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
                       ]
                     },
                     {
@@ -1595,26 +1618,26 @@
                       },
                       "type": "Microsoft.Authorization/roleAssignments",
                       "apiVersion": "2020-10-01-preview",
-                      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]",
-                      "name": "[guid(format('rbac-{0}-{1}', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24), parameters('principalIds')[copyIndex()]))]",
+                      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', format('st{0}', variables('stgNameClean')))]",
+                      "name": "[guid(format('rbac-{0}-{1}', format('st{0}', variables('stgNameClean')), parameters('principalIds')[copyIndex()]))]",
                       "properties": {
                         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
                         "principalId": "[parameters('principalIds')[copyIndex()]]",
                         "principalType": "ServicePrincipal"
                       },
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                        "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
                       ]
                     }
                   ],
                   "outputs": {
                     "storageAccountId": {
                       "type": "string",
-                      "value": "[resourceId('Microsoft.Storage/storageAccounts', take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24))]"
+                      "value": "[resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('stgNameClean')))]"
                     },
                     "storageAccountName": {
                       "type": "string",
-                      "value": "[take(replace(variables('baseNameClean'), '{rtype}', 'stg'), 24)]"
+                      "value": "[format('st{0}', variables('stgNameClean'))]"
                     }
                   }
                 }
@@ -1824,7 +1847,7 @@
                     "value": "Public"
                   },
                   "ingestPipelineName": {
-                    "value": "pipe-data_move"
+                    "value": "[parameters('pipelineName')]"
                   },
                   "sourceStorageAccountName": {
                     "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('privateStorageAccountRG')), 'Microsoft.Resources/deployments', replace(parameters('deploymentNameStructure'), '{rtype}', 'stg-pub'))).outputs.storageAccountName.value]"
@@ -1941,7 +1964,7 @@
                     "value": "Private"
                   },
                   "ingestPipelineName": {
-                    "value": "pipe-data_move"
+                    "value": "[parameters('pipelineName')]"
                   },
                   "sourceStorageAccountName": {
                     "value": "[parameters('privateStorageAccountName')]"
