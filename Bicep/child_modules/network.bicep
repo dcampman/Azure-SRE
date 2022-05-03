@@ -6,7 +6,7 @@ param dnsServers array = []
 param subnets object
 param nsgSecurityRules array = []
 param defaultRouteNextHop string = ''
-param hubVirtualNetwork object = {}
+param hubVirtualNetworkId string = ''
 param tags object = {}
 
 var customDNS = !empty(dnsServers)
@@ -70,15 +70,15 @@ resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in item
   tags: tags
 }]
 
-resource peerToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetwork)) {
-  name: '${virtual_network.name}-to-${last(split(hubVirtualNetwork.id, '/'))}'
+resource peerToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetworkId)) {
+  name: '${virtual_network.name}-to-${last(split(hubVirtualNetworkId, '/'))}'
   parent: virtual_network
   properties: {
     allowForwardedTraffic: true
     allowGatewayTransit: false
     allowVirtualNetworkAccess: true
     remoteVirtualNetwork: {
-      id: hubVirtualNetwork.id
+      id: hubVirtualNetworkId
     }
     useRemoteGateways: false
   }

@@ -263,7 +263,7 @@
                   ],
                   "required": true
                 },
-                "visible": true
+                "visible": "[not(steps('workspaceConfig').networkingSection.newOrExistingVnet)]"
               },
               {
                 "name": "hubVnetSelector",
@@ -475,7 +475,7 @@
       "vmCount": "[steps('workspaceConfig').remoteAccessSection.vmCount]",
       "approverEmail": "[steps('dataAutomationConfig').dataAutomationSection.approverEmail]",
       "virtualNetwork": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.vnetSelector, parse('{}'))]",
-      "hubVirtualNetwork": "[if(and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub), steps('workspaceConfig').networkingSection.hubVnetSelector, parse('{}'))]",
+      "hubVirtualNetworkId": "[if(and(steps('workspaceConfig').networkingSection.newOrExistingVnet, steps('workspaceConfig').networkingSection.peerToHub), steps('workspaceConfig').networkingSection.hubVnetSelector.id, '')]",
       "defaultRouteNextHop": "[steps('workspaceConfig').networkingSection.defaultRouteNextHop]",
       "computeSubnetId": "[if(and(steps('workspaceConfig').remoteAccessSection.avdAccess, steps('workspaceConfig').networkingSection.newOrExistingVnet), concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').remoteAccessSection.computeSubnetDropDown), '')]",
       "privateEndpointSubnetId": "[if(steps('workspaceConfig').networkingSection.newOrExistingVnet, concat(steps('workspaceConfig').networkingSection.vnetSelector.id, '/subnets/', steps('workspaceConfig').networkingSection.privateEndpointSubnetDropDown), '')]",

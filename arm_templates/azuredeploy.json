@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "3544018745680945108"
+      "templateHash": "4985198418192607828"
     }
   },
   "parameters": {
@@ -59,9 +59,9 @@
       "type": "object",
       "defaultValue": {}
     },
-    "hubVirtualNetwork": {
-      "type": "object",
-      "defaultValue": {}
+    "hubVirtualNetworkId": {
+      "type": "string",
+      "defaultValue": ""
     },
     "defaultRouteNextHop": {
       "type": "string",
@@ -246,8 +246,8 @@
           "defaultRouteNextHop": {
             "value": "[parameters('defaultRouteNextHop')]"
           },
-          "hubVirtualNetwork": {
-            "value": "[parameters('hubVirtualNetwork')]"
+          "hubVirtualNetworkId": {
+            "value": "[parameters('hubVirtualNetworkId')]"
           },
           "tags": {
             "value": "[parameters('tags')]"
@@ -260,7 +260,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "3985736658303427134"
+              "templateHash": "13030508223364887326"
             }
           },
           "parameters": {
@@ -292,9 +292,9 @@
               "type": "string",
               "defaultValue": ""
             },
-            "hubVirtualNetwork": {
-              "type": "object",
-              "defaultValue": {}
+            "hubVirtualNetworkId": {
+              "type": "string",
+              "defaultValue": ""
             },
             "tags": {
               "type": "object",
@@ -372,16 +372,16 @@
               "tags": "[parameters('tags')]"
             },
             {
-              "condition": "[not(empty(parameters('hubVirtualNetwork')))]",
+              "condition": "[not(empty(parameters('hubVirtualNetworkId')))]",
               "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
               "apiVersion": "2021-05-01",
-              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-{1}', replace(variables('baseName'), '{rtype}', 'vnet'), last(split(parameters('hubVirtualNetwork').id, '/'))))]",
+              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-{1}', replace(variables('baseName'), '{rtype}', 'vnet'), last(split(parameters('hubVirtualNetworkId'), '/'))))]",
               "properties": {
                 "allowForwardedTraffic": true,
                 "allowGatewayTransit": false,
                 "allowVirtualNetworkAccess": true,
                 "remoteVirtualNetwork": {
-                  "id": "[parameters('hubVirtualNetwork').id]"
+                  "id": "[parameters('hubVirtualNetworkId')]"
                 },
                 "useRemoteGateways": false
               },

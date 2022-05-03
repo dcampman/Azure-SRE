@@ -22,7 +22,7 @@ param avdAccess bool = false
 param rdshVmSize string = 'Standard_D2s_v3'
 param vmCount int = 1
 param virtualNetwork object = {}
-param hubVirtualNetwork object = {}
+param hubVirtualNetworkId string = ''
 param defaultRouteNextHop string = ''
 param computeSubnetId string = ''
 param privateEndpointSubnetId string = ''
@@ -122,7 +122,7 @@ module workspaceVnet '../child_modules/network.bicep' = if (empty(virtualNetwork
     addressPrefixes: vnetAddressPrefixes
     subnets: subnets
     defaultRouteNextHop: defaultRouteNextHop
-    hubVirtualNetwork: hubVirtualNetwork
+    hubVirtualNetworkId: hubVirtualNetworkId
     tags: tags
   }
 }
