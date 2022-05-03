@@ -139,8 +139,8 @@
             "resourceType": "Microsoft.OperationalInsights/workspaces",
             "options": {
               "filter": {
-                "subscription": "onBasics",
-                "location": "onBasics"
+                "subscription": "all",
+                "location": "all"
               }
             },
             "visible": "[basics('loggingConfig').newOrExistingLogAnalytics]"
@@ -196,7 +196,7 @@
                 "type": "Microsoft.Common.OptionsGroup",
                 "label": "New or Existing Virtual Network",
                 "defaultValue": "New",
-                "toolTip": "Choose 'New' to create a new virtual network or 'Existing' to choose an existing virtual network. If choosing an existing virtual network it must have a 'privateEndpoint' and 'compute' subnet.",
+                "toolTip": "Choose 'New' to create a new virtual network or 'Existing' to choose an existing virtual network.",
                 "constraints": {
                   "allowedValues": [
                     {
@@ -240,7 +240,7 @@
                 "toolTip": "This subnet will be used for the secured storage account's private endpoints.",
                 "constraints": {
                   "allowedValues": "[map(steps('workspaceConfig').networkingSection.subnetsApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
-                  "required": true
+                  "required": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.newOrExistingVnet]"
               },
@@ -249,7 +249,7 @@
                 "type": "Microsoft.Common.OptionsGroup",
                 "label": "Peer to an existing HUB?",
                 "defaultValue": "No",
-                "toolTip": "Will the workspace virtual network need to be peered with an existing hub virtual network? If so, you will need to manage NSG rules and specific routes on those resources deployed fomr this template. If this option is not selected, a default NSG rule will be placed on all NSGs to limit internet access.",
+                "toolTip": "Will the workspace virtual network need to be peered with an existing hub virtual network? If so, you will need to manage NSG rules and specific routes on the resources deployed from this template. If this option is not selected, a default NSG rule will be placed on all NSGs to limit internet access.",
                 "constraints": {
                   "allowedValues": [
                     {
@@ -271,7 +271,10 @@
                 "label": "Hub Virtual Network",
                 "resourceType": "Microsoft.Network/virtualNetworks",
                 "options": {
-                  "filter": {}
+                  "filter": {
+                    "location": "all",
+                    "subscription": "all"
+                  }
                 },
                 "visible": "[steps('workspaceConfig').networkingSection.peerToHub]"
               },
@@ -280,7 +283,7 @@
                 "type": "Microsoft.Common.TextBox",
                 "label": "Next Hop IP Address",
                 "defaultValue": "",
-                "toolTip": "Optional 'next hop' address for default 0.0.0.0/0 rule on all route tables. If you intend to manage routing separately, please do not fill in this parameter.",
+                "toolTip": "Optional 'next hop' address for default 0.0.0.0/0 rule on all route tables. If you intend to manage routing separately, do not fill in this parameter.",
                 "constraints": {
                   "required": false,
                   "regex": "",
