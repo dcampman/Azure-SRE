@@ -71,7 +71,7 @@ resource routeTables 'Microsoft.Network/routeTables@2021-05-01' = [for s in item
 }]
 
 resource peerToHub 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-05-01' = if (!empty(hubVirtualNetwork)) {
-  name: '${virtual_network.name}-to-${hubVirtualNetwork.name}'
+  name: '${virtual_network.name}-to-${last(split(hubVirtualNetwork.id, '/'))}'
   parent: virtual_network
   properties: {
     allowForwardedTraffic: true
