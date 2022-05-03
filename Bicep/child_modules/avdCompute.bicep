@@ -109,7 +109,7 @@ resource vmDeployment 'Microsoft.Resources/deployments@2021-04-01' = {
         value: true
       }
       intune: {
-        value: true
+        value: false
       }
       securityType: {
         value: 'TrustedLaunch'

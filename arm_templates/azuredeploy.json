@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "880581389864023792"
+      "templateHash": "5638661124607238495"
     }
   },
   "parameters": {
@@ -2329,7 +2329,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "11046766096956082883"
+              "templateHash": "4979982869028689892"
             }
           },
           "parameters": {
@@ -2562,7 +2562,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1318.3566",
-                      "templateHash": "5758676699925417372"
+                      "templateHash": "15834731645588540393"
                     }
                   },
                   "parameters": {
@@ -2700,7 +2700,7 @@
                             "value": true
                           },
                           "intune": {
-                            "value": true
+                            "value": false
                           },
                           "securityType": {
                             "value": "TrustedLaunch"
