@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1318.3566",
-      "templateHash": "5638661124607238495"
+      "templateHash": "6754439871315940478"
     }
   },
   "parameters": {
@@ -112,7 +112,7 @@
         "privateEndpointNetworkPolicies": "Enabled",
         "serviceEndpoints": []
       },
-      "compute": {
+      "workload": {
         "name": "compute",
         "addressPrefix": "172.17.0.128/25",
         "privateEndpointNetworkPolicies": "Disabled",
@@ -260,7 +260,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1318.3566",
-              "templateHash": "3927517824459171522"
+              "templateHash": "634369127187313507"
             }
           },
           "parameters": {
@@ -375,7 +375,7 @@
               "condition": "[not(empty(parameters('hubVirtualNetwork')))]",
               "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
               "apiVersion": "2021-05-01",
-              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-hub', replace(variables('baseName'), '{rtype}', 'vnet')))]",
+              "name": "[format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), format('{0}-to-{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('hubVirtualNetwork').name))]",
               "properties": {
                 "allowForwardedTraffic": true,
                 "allowGatewayTransit": false,
@@ -401,7 +401,7 @@
             },
             "workloadSubnetId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').compute.name), '/')[1])]"
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').workload.name), '/')[0], split(format('{0}/{1}', replace(variables('baseName'), '{rtype}', 'vnet'), parameters('subnets').workload.name), '/')[1])]"
             }
           }
         }

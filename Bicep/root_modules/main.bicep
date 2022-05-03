@@ -56,13 +56,13 @@ var vnetAddressPrefixes = [
 // subnet configuration if building new virtual network for research workspace
 var subnets = {
   'privateEndpoints': {
-    name: 'privateEndpoints' // this is hard coded in a resource lookup in ../child_modules/network.bicep.
+    name: 'privateEndpoints'
     addressPrefix: '172.17.0.0/25'
     privateEndpointNetworkPolicies: 'Enabled'
     serviceEndpoints: []
   }
-  'compute': {
-    name: 'compute' // this is hard coded in a resource lookup in ../child_modules/network.bicep.
+  'workload': {
+    name: 'compute'
     addressPrefix: '172.17.0.128/25'
     privateEndpointNetworkPolicies: 'Disabled'
     serviceEndpoints: []
@@ -126,8 +126,6 @@ module workspaceVnet '../child_modules/network.bicep' = if (empty(virtualNetwork
     tags: tags
   }
 }
-
-// add peer if exists.
 
 //##################################################################################################################################################################################
 
