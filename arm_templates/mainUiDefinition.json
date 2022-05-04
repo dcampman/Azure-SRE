@@ -461,7 +461,7 @@
           {
             "name": "tags",
             "type": "Microsoft.Common.TagsByResource",
-            "resources": ["All Resources"]
+            "resources": ["All_Resources"]
           }
         ]
       }
@@ -482,7 +482,7 @@
       "PrivateStorage": "[if(steps('workspaceConfig').storageSection.newOrExistingStorage, steps('workspaceConfig').storageSection.storageSelector, parse('{}'))]",
       "LogAnalytics": "[if(basics('loggingConfig').newOrExistingLogAnalytics, basics('loggingConfig').logAnalyticsSelector, parse('{}'))]",
       "userAssignedManagedIdentity": "[if(empty(steps('dataAutomationConfig').identity), steps('dataAutomationConfig').identity, parse('{}'))]",
-      "tags": "[steps('tags').tags]"
+      "tags": "[steps('tags').tags.All_Resources]"
     }
   }
 }
